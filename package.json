@@ -1,5 +1,5 @@
 {
-  "name": "classes",
+  "name": "ai-tutor-for-school",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,15 +9,25 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:pdf": "node --import tsx/esm tests/pdf-extract.test.ts",
-    "test:validation": "tsx tests/validation.test.ts"
+    "test:validation": "tsx tests/validation.test.ts",
+    "test:chunking": "tsx tests/chunking.test.ts",
+    "test:e2e": "tsx tests/e2e.test.ts",
+    "test:keywords": "tsx tests/keywords.test.ts",
+    "test:text-quality": "tsx tests/text-quality.test.ts",
+    "test:ai-errors": "tsx tests/ai-errors.test.ts",
+    "test:tutor-prompt": "tsx tests/tutor-prompt.test.ts",
+    "test:tutor-service": "tsx tests/tutor-service.test.ts",
+    "test:tutor-golden": "tsx tests/tutor-golden.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "next": "16.3.8",
+    "openai": "^4.104.0",
     "pdfjs-dist": "^6.4.299",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

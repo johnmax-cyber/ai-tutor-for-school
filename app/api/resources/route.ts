@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText } from "@/lib/documents/pdf";
 import { chunkDocument, verifyDocumentCoverage } from "@/lib/documents/chunking";
+import { assessTextQuality } from "@/lib/documents/text-quality";
 import { validatePdf, MAX_PDF_BYTES } from "@/lib/resources/validation";
 import { buildStoragePath } from "@/lib/supabase/storage";
 import type { Resource } from "@/lib/resources/types";
@@ -11,7 +12,7 @@ export const runtime = "nodejs";
 
 const MAX_BYTES_ERROR = `PDF must be at most ${MAX_PDF_BYTES / 1024 / 1024} MB.`;
 
-function jsonError(message: string, status: number) {
+export function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
@@ -109,12 +110,26 @@ export async function POST(request: Request) {
   try {
     const doc = await extractPdfText(buffer);
 
+    const quality = assessTextQuality(doc.pages);
+    if (!quality.ok) {
+      const errorMessage =
+        "No readable text found. This PDF looks scanned or photographed. OCR is not supported yet.";
+      await supabase
+        .from("resources")
+        .update({ status: "failed", error_message: errorMessage })
+        .eq("id", resourceId);
+      return jsonError(errorMessage, 422);
+    }
+
     // Chunk pages and prepare for insertion
     const chunks = chunkDocument(doc.pages);
 
+    // Filter out empty chunks
+    const nonEmptyChunks = chunks.filter((c) => c.content.trim().length > 0);
+
     const coverageReports = verifyDocumentCoverage(
       doc.pages.map((p) => ({ pageNumber: p.pageNumber, text: p.text })),
-      chunks,
+      nonEmptyChunks,
     );
     for (const report of coverageReports) {
       if (!report.is_complete || report.has_gap) {
@@ -124,7 +139,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const chunkInserts = chunks.map((c) => toChunkInsert(c, resourceId, userId));
+    const chunkInserts = nonEmptyChunks.map((c) => toChunkInsert(c, resourceId, userId));
 
     // Insert chunks first
     await supabase.from("resource_chunks").delete().eq("resource_id", resourceId);

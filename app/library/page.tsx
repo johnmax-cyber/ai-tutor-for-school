@@ -32,7 +32,7 @@ export default async function LibraryPage() {
   const { data: resources, error } = await supabase
     .from("resources")
     .select(
-      "id, user_id, title, original_filename, storage_path, mime_type, size_bytes, status, error_message, page_count, extracted_text, created_at, updated_at",
+      "id, user_id, title, original_filename, storage_path, mime_type, size_bytes, status, error_message, page_count, created_at, updated_at",
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -52,7 +52,15 @@ export default async function LibraryPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Your documents</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">Your documents</h2>
+          <a
+            href="/tutor"
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+          >
+            Open Tutor
+          </a>
+        </div>
         {list.length === 0 ? (
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             No documents yet. Upload a PDF to get started.
@@ -65,6 +73,7 @@ export default async function LibraryPage() {
                 <th className="pb-2 font-medium">Status</th>
                 <th className="pb-2 font-medium">Pages</th>
                 <th className="pb-2 font-medium text-right">Size</th>
+                <th className="pb-2 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -76,8 +85,31 @@ export default async function LibraryPage() {
                   <td className="py-2 text-right">
                     {(r.size_bytes / 1024 / 1024).toFixed(2)} MB
                   </td>
+                  <td className="py-2 text-right">
+                    {r.status === "ready" && (
+                      <a
+                        href={`/tutor?resourceId=${r.id}`}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                      >
+                        Study
+                      </a>
+                    )}
+                  </td>
                 </tr>
               ))}
+              {list.some((r) => r.status === "failed") && (
+                <>
+                  {list
+                    .filter((r) => r.status === "failed")
+                    .map((r) => (
+                      <tr key={`error-${r.id}`} className="border-t border-zinc-200 dark:border-zinc-800">
+                        <td colSpan={5} className="py-2 text-sm text-red-600 dark:text-red-400">
+                          {r.error_message}
+                        </td>
+                      </tr>
+                    ))}
+                </>
+              )}
             </tbody>
           </table>
         )}

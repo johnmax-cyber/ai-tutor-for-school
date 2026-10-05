@@ -1,6 +1,6 @@
 create table if not exists public.resource_chunks (
   id uuid primary key default gen_random_uuid(),
-  resource_id uuid references public.resources not null on delete cascade,
+  resource_id uuid not null references public.resources(id) on delete cascade,
   user_id uuid references auth.users not null,
   page_number int not null,
   chunk_index int not null,

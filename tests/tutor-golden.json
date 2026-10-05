@@ -1,0 +1,5 @@
+[
+  { "question": "PLACEHOLDER: What is a byte?", "expectedPage": 2 },
+  { "question": "PLACEHOLDER: How does TCP handshake work?", "expectedPage": 3 },
+  { "question": "PLACEHOLDER: What is encryption?", "expectedPage": 1 }
+]

@@ -1,3 +1,5 @@
+Overrides: keyword OR search with ts_rank_cd; auth.uid() inside SQL; zod JSON output not function-calling; grounded computed in code; no 400-char truncation; no /api/tutor/resources route.
+
 # Phase 4 — AI Tutor Implementation Plan
 
 > **Status:** Planning — ready for review
