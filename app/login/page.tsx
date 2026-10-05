@@ -1,0 +1,112 @@
+"use client";
+
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+type Mode = "signin" | "signup";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [mode, setMode] = useState<Mode>("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const supabase = createClient();
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    // Trim whitespace from email and password
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    try {
+      if (mode === "signin") {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password: trimmedPassword,
+        });
+        if (signInError) throw signInError;
+      } else {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: trimmedEmail,
+          password: trimmedPassword,
+        });
+        if (signUpError) throw signUpError;
+      }
+      router.push("/library");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-zinc-50 p-4 dark:bg-black">
+      <div className="w-full max-w-sm space-y-6 rounded-lg bg-white p-8 shadow dark:bg-zinc-950 dark:border dark:border-zinc-800">
+        <h1 className="text-center text-2xl font-semibold">AI Study Agent</h1>
+        <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+          {mode === "signin" ? "Sign in" : "Create account"} to continue.
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              autoComplete="email"
+              className="mt-1 block w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              minLength={6}
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              className="mt-1 block w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
+          >
+            {loading ? "Working..." : mode === "signin" ? "Sign in" : "Sign up"}
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+          {mode === "signin" ? "No account yet?" : "Already have an account?"}{" "}
+          <button
+            type="button"
+            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+            className="font-medium text-zinc-900 dark:text-zinc-100 underline"
+          >
+            {mode === "signin" ? "Sign up" : "Sign in"}
+          </button>
+        </p>
+      </div>
+    </main>
+  );
+}
