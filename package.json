@@ -17,7 +17,13 @@
     "test:ai-errors": "tsx tests/ai-errors.test.ts",
     "test:tutor-prompt": "tsx tests/tutor-prompt.test.ts",
     "test:tutor-service": "tsx tests/tutor-service.test.ts",
-    "test:tutor-golden": "tsx tests/tutor-golden.test.ts"
+    "test:tutor-golden": "tsx tests/tutor-golden.test.ts",
+    "test:study-mastery": "tsx tests/study-mastery.test.ts",
+    "test:study-handoff": "tsx tests/study-handoff.test.ts",
+    "test:study-mistakes": "tsx tests/study-mistakes.test.ts",
+    "test:study-service": "tsx tests/study-service.test.ts",
+    "test:tutor-generate": "tsx tests/tutor-generate.test.ts",
+    "test:study-e2e": "tsx tests/study-e2e.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -27,6 +33,7 @@
     "pdfjs-dist": "^6.4.299",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "uuid": "^10.0.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -34,6 +41,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "pdf-lib": "^1.17.1",

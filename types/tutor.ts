@@ -5,6 +5,7 @@ export interface Citation {
   resource_title: string;
   page_number: number;
   content: string;
+  rank: number;
 }
 
 export interface TutorAnswer {

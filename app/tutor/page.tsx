@@ -34,7 +34,15 @@ export default async function TutorPage({
     <main className="mx-auto max-w-4xl space-y-8 px-6 py-10">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">AI Tutor</h1>
-        <SignOutButton />
+        <div className="flex items-center space-x-2">
+          <a
+            href="/study"
+            className="text-sm font-medium text-green-600 hover:text-green-700"
+          >
+            Study Sessions
+          </a>
+          <SignOutButton />
+        </div>
       </div>
 
       {readyResources.length === 0 ? (

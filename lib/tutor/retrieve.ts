@@ -34,3 +34,29 @@ export async function retrieveChunks(
 
   return (data ?? []) as RetrievedChunk[];
 }
+
+export async function retrieveChunksForTopic(
+  topicName: string,
+  topicId: string
+): Promise<RetrievedChunk[]> {
+  const supabase = await createClient();
+  const { terms, tsQuery } = extractKeywords(topicName);
+  
+  if (terms.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .rpc("search_resource_chunks_by_topic", {
+      p_query: tsQuery,
+      p_limit: 12,
+      p_topic_id: topicId
+    });
+
+  if (error) {
+    console.error("search_resource_chunks_by_topic error:", error);
+    return [];
+  }
+
+  return (data ?? []) as RetrievedChunk[];
+}
