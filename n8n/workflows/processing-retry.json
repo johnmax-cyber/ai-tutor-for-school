@@ -1,0 +1,120 @@
+{
+  "name": "processing-retry",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": { "interval": [ { "cron": "*/5 * * * *" } ] }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1.2,
+      "position": [280, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.NEXT_PUBLIC_SUPABASE_URL}}/rest/v1/user_preferences?select=user_id&processing_retry_enabled=eq.true",
+        "authentication": "none",
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000002",
+      "name": "Supabase: retry-enabled users",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [520, 300]
+    },
+    {
+      "parameters": { "batchSize": 10 },
+      "id": "a1b2c3d4-0001-4000-8000-000000000003",
+      "name": "Split in batches (users)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.NEXT_PUBLIC_SUPABASE_URL}}/rest/v1/resources?select=id,user_id,updated_at&user_id=eq.{{$json.user_id}}&status=in.(processing,failed)",
+        "authentication": "none",
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000004",
+      "name": "Supabase: pending resources",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": { "batchSize": 25 },
+      "id": "a1b2c3d4-0001-4000-8000-000000000005",
+      "name": "Split in batches (resources)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [1240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ Date.parse($json.updated_at) }}",
+              "operation": "smaller",
+              "value2": "={{ Date.now() - 300000 }}"
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000006",
+      "name": "IF updated_at older than 5 minutes",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [1480, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.APP_URL}}/api/webhooks/n8n/retry-processing",
+        "authentication": "none",
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-n8n-webhook-secret", "value": "={{$env.N8N_WEBHOOK_SECRET}}" }
+          ]
+        },
+        "body": {
+          "resourceId": "={{$json.id}}",
+          "userId": "={{$json.user_id}}"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000007",
+      "name": "Call retry-processing webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1720, 200]
+    }
+  ],
+  "connections": {
+    "Every 5 minutes": { "main": [ [ { "node": "Supabase: retry-enabled users", "type": "main", "index": 0 } ] ] },
+    "Supabase: retry-enabled users": { "main": [ [ { "node": "Split in batches (users)", "type": "main", "index": 0 } ] ] },
+    "Split in batches (users)": { "main": [ [ { "node": "Supabase: pending resources", "type": "main", "index": 0 } ] ] },
+    "Supabase: pending resources": { "main": [ [ { "node": "Split in batches (resources)", "type": "main", "index": 0 } ] ] },
+    "Split in batches (resources)": { "main": [ [ { "node": "IF updated_at older than 5 minutes", "type": "main", "index": 0 } ] ] },
+    "IF updated_at older than 5 minutes": { "main": [ [ { "node": "Call retry-processing webhook", "type": "main", "index": 0 } ] ] }
+  },
+  "active": false,
+  "settings": { "executionTimeout": 3600, "timezone": "UTC" },
+  "meta": { "n8nDescriptionMetadataVersionId": "0" }
+}

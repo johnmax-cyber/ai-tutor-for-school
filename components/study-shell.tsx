@@ -218,7 +218,7 @@ export function StudyShell({
               className="w-8 h-8 rounded-lg bg-surface-container-low border border-surface-container-high text-on-surface-variant hover:text-on-surface hover:bg-surface-container flex items-center justify-center transition-colors relative"
               title="Open AI Tutor"
             >
-              <span className="material_symbols_outlined text-[18px] text-tertiary">
+              <span className="material-symbols-outlined text-[18px] text-tertiary">
                 smart_toy
               </span>
             </Link>
@@ -229,7 +229,7 @@ export function StudyShell({
               title="Settings"
               aria-label="Settings"
             >
-              <span className="material_symbols_outlined text-[18px]">
+              <span className="material-symbols-outlined text-[18px]">
                 settings
               </span>
             </Link>
@@ -237,7 +237,7 @@ export function StudyShell({
             <NotificationsPopover />
 
             <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary text-xs font-semibold">
-              <span className="material_symbols_outlined text-[18px]">
+              <span className="material-symbols-outlined text-[18px]">
                 person
               </span>
             </div>

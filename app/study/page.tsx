@@ -97,14 +97,14 @@ export default function StudyHub() {
             <div className="p-5 rounded-xl bg-surface-container-low border border-surface-container-high hover:border-primary/50 transition-colors shadow-sm">
               <div className="flex items-start gap-3">
                 <span
-                  className="material_symbols_outlined text-[22px] text-secondary flex-shrink-0"
+                  className="material-symbols-outlined text-[22px] text-secondary flex-shrink-0"
                   aria-hidden="true"
                 >
                   emoji_events
                 </span>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-sm font-semibold text-on-surface-variant flex items-center gap-1.5">
-                    <span>Today's Mission</span>
+                    <span>{"Today's Mission"}</span>
                   </h2>
                   {(() => {
                     const { title, description } = generateDailyMission(
@@ -122,7 +122,7 @@ export default function StudyHub() {
                     );
                   })()}
                 </div>
-                <span className="material_symbols_outlined text-[20px] text-outline group-hover:text-primary transition-colors">
+                <span className="material-symbols-outlined text-[20px] text-outline group-hover:text-primary transition-colors">
                   arrow_forward
                 </span>
               </div>

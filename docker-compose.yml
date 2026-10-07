@@ -1,0 +1,40 @@
+name: ai-study-agent
+
+# n8n Automation (Phase 7) — local only.
+#
+# The Next.js app runs on the HOST (`npm run dev`), not in Docker
+# (the laptop has 4GB RAM). n8n reaches it at http://host.docker.internal:3000
+# thanks to the `extra_hosts: "host.docker.internal:host-gateway"` entry.
+#
+# n8n hosts workflows in a SINGLE container backed by SQLite (no worker/redis).
+# Secrets are read from .env.local (via env_file) and exposed to n8n workflow
+# nodes through `$env.*`; N8N_BLOCK_ENV_ACCESS_IN_NODE=false enables that.
+#
+# Start:   docker compose up -d
+# Import:  ./scripts/n8n-import.sh
+# App:     npm run dev   (http://localhost:3000)
+# n8n UI:  http://localhost:5678
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file:
+      - .env.local
+    environment:
+      # n8n 1.x no longer uses N8N_BASIC_AUTH_* — create the owner account on first launch.
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      # Endpoint the Next.js app is reachable at from inside this container.
+      - APP_URL=http://host.docker.internal:3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # n8n runtime data (SQLite DB, credentials cache) — gitignored.
+      - ./n8n:/home/node/.n8n
+      # Workflow JSON source — tracked in git, imported via scripts/n8n-import.sh.
+      - ./n8n/workflows:/workflows
+    mem_limit: 768m
