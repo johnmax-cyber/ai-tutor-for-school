@@ -23,6 +23,7 @@
     "test:study-handoff": "tsx tests/study-handoff.test.ts",
     "test:study-mistakes": "tsx tests/study-mistakes.test.ts",
     "test:study-service": "tsx tests/study-service.test.ts",
+    "test:study-analytics": "tsx tests/study-analytics.test.ts",
     "test:tutor-generate": "tsx tests/tutor-generate.test.ts",
     "test:study-e2e": "tsx tests/study-e2e.test.ts"
   },
@@ -40,6 +41,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

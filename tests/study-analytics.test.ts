@@ -89,13 +89,14 @@ const mistakeTips = computeStudyTips({
 });
 check("recurring mistakes generates tip", mistakeTips.some(t => t.category === "mistakes"));
 
-const noTips = computeStudyTips({
+const excellentTips = computeStudyTips({
   accuracy: 0.95,
   avgHintsPerQuestion: 0.1,
   recurringMistakes: [],
   totalAttempts: 10,
 });
-check("no tips when performance is excellent and no mistakes", noTips.length === 0);
+check("excellent performance generates progress tip", excellentTips.some(t => t.category === "progress"));
+check("excellent performance tip count is 1", excellentTips.length === 1);
 
 // ============================================
 // Session Analytics Tests
