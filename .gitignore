@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# n8n runtime data (workflow JSON is tracked in git)
+/n8n/.cache/
+/n8n/*.db
+/n8n/n8n.sqlite
+.n8n/

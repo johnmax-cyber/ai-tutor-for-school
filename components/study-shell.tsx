@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { UploadForm } from "@/components/upload-form";
+import { NotificationsPopover } from "@/components/notifications-popover";
 
 interface BreadcrumbItem {
   label: string;
@@ -217,13 +218,26 @@ export function StudyShell({
               className="w-8 h-8 rounded-lg bg-surface-container-low border border-surface-container-high text-on-surface-variant hover:text-on-surface hover:bg-surface-container flex items-center justify-center transition-colors relative"
               title="Open AI Tutor"
             >
-              <span className="material-symbols-outlined text-[18px] text-tertiary">
+              <span className="material_symbols_outlined text-[18px] text-tertiary">
                 smart_toy
               </span>
             </Link>
 
+            <Link
+              href="/settings"
+              className="w-8 h-8 rounded-lg bg-surface-container-low border border-surface-container-high text-on-surface-variant hover:text-on-surface hover:bg-surface-container flex items-center justify-center transition-colors"
+              title="Settings"
+              aria-label="Settings"
+            >
+              <span className="material_symbols_outlined text-[18px]">
+                settings
+              </span>
+            </Link>
+
+            <NotificationsPopover />
+
             <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary text-xs font-semibold">
-              <span className="material-symbols-outlined text-[18px]">
+              <span className="material_symbols_outlined text-[18px]">
                 person
               </span>
             </div>

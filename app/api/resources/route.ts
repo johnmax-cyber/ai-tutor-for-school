@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { extractPdfText } from "@/lib/documents/pdf";
-import { chunkDocument, verifyDocumentCoverage } from "@/lib/documents/chunking";
 import { validatePdf, MAX_PDF_BYTES } from "@/lib/resources/validation";
 import { buildStoragePath } from "@/lib/supabase/storage";
 import type { Resource } from "@/lib/resources/types";
-import { toChunkInsert } from "@/lib/resources/types";
+import { processResource } from "@/lib/resources/processing";
 
 export const runtime = "nodejs";
 
@@ -106,88 +104,12 @@ export async function POST(request: Request) {
     return jsonError("Failed to store file.", 500);
   }
 
-  try {
-    const doc = await extractPdfText(buffer);
+  const result = await processResource(resourceId, supabase);
 
-    // Chunk pages and prepare for insertion
-    const chunks = chunkDocument(doc.pages);
-
-    // Filter out empty chunks
-    const nonEmptyChunks = chunks.filter((c) => c.content.trim().length > 0);
-
-    const coverageReports = verifyDocumentCoverage(
-      doc.pages.map((p) => ({ pageNumber: p.pageNumber, text: p.text })),
-      nonEmptyChunks,
-    );
-    for (const report of coverageReports) {
-      if (!report.is_complete || report.has_gap) {
-        console.warn(
-          `Coverage gap on page ${report.page_number}: length=${report.page_text_length}, gapAt=${report.first_gap_at ?? "none"}`,
-        );
-      }
-    }
-
-    const chunkInserts = nonEmptyChunks.map((c) => toChunkInsert(c, resourceId, userId));
-
-    // Insert chunks first
-    await supabase.from("resource_chunks").delete().eq("resource_id", resourceId);
-
-    const { error: chunkError } = await supabase
-      .from("resource_chunks")
-      .insert(chunkInserts);
-
-    if (chunkError) {
-      console.error("resource_chunks insert error:", chunkError.message);
-      await supabase
-        .from("resources")
-        .update({ status: "failed", error_message: "Chunk insertion failed." })
-        .eq("id", resourceId);
-      return jsonError("Chunk insertion failed.", 500);
-    }
-
-    // Only update resource to ready after successful chunk insertion
-    const { error: updateError } = await supabase
-      .from("resources")
-      .update({
-        extracted_text: doc.text,
-        page_count: doc.pageCount,
-        char_count: doc.text.length,
-        status: "ready",
-      })
-      .eq("id", resourceId);
-
-    if (updateError) {
-      console.error("resources update error:", updateError.message);
-      await supabase
-        .from("resources")
-        .update({ status: "failed", error_message: "Resource update failed." })
-        .eq("id", resourceId);
-      return NextResponse.json(
-        { resourceId, status: "processing", error: "Resource recorded; status update pending." },
-        { status: 202 },
-      );
-    }
-
-    const { data: resource, error: fetchError } = await supabase
-      .from("resources")
-      .select(
-        "id, user_id, title, original_filename, storage_path, mime_type, size_bytes, char_count, status, error_message, page_count, created_at, updated_at",
-      )
-      .eq("id", resourceId)
-      .single();
-
-    if (fetchError) {
-      console.error("resources fetch error:", fetchError.message);
-    }
-
-    return NextResponse.json({ resource: resource as Resource });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "unknown";
-    console.error("pdf extraction error:", message);
-    await supabase
-      .from("resources")
-      .update({ status: "failed", error_message: "PDF text extraction failed." })
-      .eq("id", resourceId);
-    return jsonError("PDF processing failed.", 500);
+  if (result.success) {
+    return NextResponse.json({ resource: result.resource as Resource });
   }
+
+  console.error("resource processing error:", result.error);
+  return jsonError(result.error ?? "PDF processing failed.", 500);
 }

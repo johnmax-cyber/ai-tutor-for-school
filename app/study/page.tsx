@@ -5,10 +5,16 @@ import Link from "next/link";
 import { StudyShell } from "@/components/study-shell";
 import { StudySession } from "@/types/study";
 import { TopicInsights } from "@/lib/study/types";
+import {
+  selectDailyMissionTopic,
+  generateDailyMission,
+} from "@/lib/missions/generation";
+import type { MissionTopic } from "@/lib/missions/types";
 
 export default function StudyHub() {
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [topicsInsights, setTopicsInsights] = useState<TopicInsights[]>([]);
+  const [missionTopic, setMissionTopic] = useState<MissionTopic | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +35,9 @@ export default function StudyHub() {
         ]);
 
         setSessions(sessionsData.sessions || []);
+
+        const allTopics = (topicsData.topics || []) as MissionTopic[];
+        setMissionTopic(selectDailyMissionTopic(allTopics));
 
         // Fetch insights for topics that need review
         const reviewTopics = (topicsData.topics || []).filter(
@@ -79,6 +88,48 @@ export default function StudyHub() {
   return (
     <StudyShell breadcrumbs={[{ label: "Study Sessions", href: "/study" }]}>
       <div className="max-w-5xl mx-auto space-y-8">
+        {/* Today's Mission Card */}
+        {missionTopic && (
+          <Link
+            href={`/study/new?topicId=${missionTopic.id}`}
+            className="block group"
+          >
+            <div className="p-5 rounded-xl bg-surface-container-low border border-surface-container-high hover:border-primary/50 transition-colors shadow-sm">
+              <div className="flex items-start gap-3">
+                <span
+                  className="material_symbols_outlined text-[22px] text-secondary flex-shrink-0"
+                  aria-hidden="true"
+                >
+                  emoji_events
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-semibold text-on-surface-variant flex items-center gap-1.5">
+                    <span>Today's Mission</span>
+                  </h2>
+                  {(() => {
+                    const { title, description } = generateDailyMission(
+                      missionTopic,
+                    );
+                    return (
+                      <>
+                        <p className="mt-1 text-lg font-medium text-on-surface truncate">
+                          {title}
+                        </p>
+                        <pre className="mt-1 text-xs text-on-surface-variant whitespace-pre-line leading-relaxed">
+                          {description}
+                        </pre>
+                      </>
+                    );
+                  })()}
+                </div>
+                <span className="material_symbols_outlined text-[20px] text-outline group-hover:text-primary transition-colors">
+                  arrow_forward
+                </span>
+              </div>
+            </div>
+          </Link>
+        )}
+
         {/* Header Title & Quick Action */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-container-high">
           <div>

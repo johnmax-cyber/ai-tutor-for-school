@@ -25,7 +25,11 @@
     "test:study-service": "tsx tests/study-service.test.ts",
     "test:study-analytics": "tsx tests/study-analytics.test.ts",
     "test:tutor-generate": "tsx tests/tutor-generate.test.ts",
-    "test:study-e2e": "tsx tests/study-e2e.test.ts"
+    "test:study-e2e": "tsx tests/study-e2e.test.ts",
+    "test:missions": "tsx tests/missions.test.ts",
+    "test:notifications": "tsx tests/notifications.test.ts",
+    "test:processing-retry": "tsx tests/processing-retry.test.ts",
+    "test:n8n-webhook": "tsx tests/n8n-webhook.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
