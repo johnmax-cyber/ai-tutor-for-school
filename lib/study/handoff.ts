@@ -2,6 +2,19 @@ import { MasteryState } from "@/types/study";
 import { MistakePattern } from "@/types/study";
 
 /**
+ * Lightweight mistake type for handoff - only includes fields needed for display
+ * Excludes DB-only fields (id, user_id, topic_id, concept_id, question_id, created_at, updated_at)
+ */
+export interface HandoffMistake {
+  description: string;
+  incorrect_count: number;
+  correct_count: number;
+  hint_count: number;
+  last_seen: string;
+  recurring: boolean;
+}
+
+/**
  * Generate a study handoff text summarizing a completed session
  */
 export function generateHandoff(input: HandoffInput): string {
@@ -76,6 +89,21 @@ export function generateHandoff(input: HandoffInput): string {
   } else {
     lines.push(`Continue reviewing current material, then progress to next topic.`);
   }
+  lines.push("");
+
+  // Study tips
+  if (input.studyTips && input.studyTips.length > 0) {
+    lines.push("Study tips:");
+    for (const tip of input.studyTips) {
+      lines.push(`- ${tip}`);
+    }
+    lines.push("");
+  }
+
+  // Performance trend
+  if (input.performanceTrend && input.performanceTrend !== "insufficient_data") {
+    lines.push(`Performance trend: ${input.performanceTrend}`);
+  }
   
   return lines.join("\n");
 }
@@ -87,6 +115,8 @@ export interface HandoffInput {
   totalAttempts: number;
   correctAttempts: number;
   hintsUsed: number;
-  mistakes: MistakePattern[];
+  mistakes: HandoffMistake[];
   masteryState: MasteryState;
+  studyTips?: string[];
+  performanceTrend?: "improving" | "stable" | "declining" | "insufficient_data";
 }

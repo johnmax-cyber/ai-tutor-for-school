@@ -49,7 +49,10 @@ export function UploadForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex items-center justify-center rounded-md border border-dashed border-zinc-300 px-4 py-6 text-center dark:border-zinc-700">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/60 bg-surface-container/40 hover:bg-surface-container/70 px-4 py-8 text-center transition-colors">
+        <span className="material-symbols-outlined text-[36px] text-primary mb-2">
+          cloud_upload
+        </span>
         <label htmlFor="file" className="block w-full cursor-pointer">
           <input
             id="file"
@@ -60,18 +63,33 @@ export function UploadForm() {
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="sr-only"
           />
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">
-            {file ? file.name : "Choose a PDF file (max 25 MB)"}
-          </span>
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-sm font-medium text-on-surface">
+              {file ? file.name : "Click to select a PDF document"}
+            </span>
+            <span className="text-xs text-outline">
+              Standard PDF or Scanned Notes (Max 25 MB)
+            </span>
+          </div>
         </label>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      {error && (
+        <div className="p-3 rounded-lg bg-error-container/20 border border-error/30 text-error-crimson text-sm flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px]">error</span>
+          <span>{error}</span>
+        </div>
+      )}
+
       <button
         type="submit"
         disabled={loading || !file}
-        className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
+        className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary text-on-primary py-2.5 px-4 text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
       >
-        {loading ? "Uploading..." : "Upload PDF"}
+        <span className="material-symbols-outlined text-[18px]">
+          {loading ? "hourglass_empty" : "upload"}
+        </span>
+        <span>{loading ? "Processing Document & OCR..." : "Upload & Ingest Document"}</span>
       </button>
     </form>
   );

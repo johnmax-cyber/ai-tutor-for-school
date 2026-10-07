@@ -43,10 +43,10 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
-    if (error.message === "Session not found or access denied") {
+    if (error instanceof Error && error.message === "Session not found or access denied") {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
-    if (error.message === "Question not found or not in session") {
+    if (error instanceof Error && error.message === "Question not found or not in session") {
       return NextResponse.json({ error: "Invalid question" }, { status: 400 });
     }
     console.error("Failed to submit attempt:", error);

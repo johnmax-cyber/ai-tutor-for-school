@@ -25,7 +25,7 @@ export async function GET(request: Request) {
         id,
         name,
         description,
-        subjects(name as subject_name),
+        subjects(name),
         mastery_state,
         total_attempts,
         correct_attempts,
@@ -35,22 +35,53 @@ export async function GET(request: Request) {
         next_review_at
       `)
       .eq("user_id", userId)
-      .order("created_at", { descending: true });
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
+
+    // Get resource counts for each topic
+    const topicIds = (topics || []).map(t => t.id);
+    const resourceCounts: Record<string, number> = {};
+    
+    if (topicIds.length > 0) {
+      const { data: topicResources } = await supabase
+        .from("resources_topics")
+        .select("topic_id, resource_id")
+        .in("topic_id", topicIds);
+      
+      const resourceIds = (topicResources || []).map(r => r.resource_id);
+      
+      if (resourceIds.length > 0) {
+        const { data: resources } = await supabase
+          .from("resources")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("status", "ready")
+          .in("id", resourceIds);
+        
+        const readyResourceIds = new Set((resources || []).map(r => r.id));
+        
+        for (const tr of topicResources || []) {
+          if (readyResourceIds.has(tr.resource_id)) {
+            resourceCounts[tr.topic_id] = (resourceCounts[tr.topic_id] || 0) + 1;
+          }
+        }
+      }
+    }
 
     return NextResponse.json({ 
       topics: (topics || []).map(topic => ({
         id: topic.id,
         name: topic.name,
         description: topic.description,
-        subject_name: topic.subjects?.subject_name ?? null,
+        subject_name: topic.subjects?.[0]?.name ?? null,
         mastery_state: topic.mastery_state,
         total_attempts: topic.total_attempts,
         correct_attempts: topic.correct_attempts,
         hints_used: topic.hints_used,
         last_studied: topic.last_studied,
-        next_review_at: topic.next_review_at
+        next_review_at: topic.next_review_at,
+        resource_count: resourceCounts[topic.id] || 0
       }))
     });
   } catch (error) {
@@ -91,7 +122,7 @@ export async function POST(request: Request) {
     if (subject) {
       const { data: existingSubject, error: subjectError } = await supabase
         .from("subjects")
-        .select("id")
+        .select("id, name")
         .eq("user_id", userId)
         .eq("name", subject)
         .single();

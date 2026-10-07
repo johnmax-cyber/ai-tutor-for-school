@@ -33,10 +33,10 @@ export async function POST(
     const result = await studySessionService.endSession(userId, id);
     return NextResponse.json(result);
   } catch (error) {
-    if (error.message === "Session not found or access denied") {
+    if (error instanceof Error && error.message === "Session not found or access denied") {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
-    if (error.message === "Session is not active") {
+    if (error instanceof Error && error.message === "Session is not active") {
       return NextResponse.json({ error: "Session is not active" }, { status: 400 });
     }
     console.error("Failed to end study session:", error);

@@ -1,0 +1,14 @@
+## Todo List
+
+- [x] Audit existing codebase structure and Stitch design files (COMPLETED ✓)
+- [~] Create comprehensive Stitch UI Integration Plan (current phase)
+- [ ] Review and finalize the implementation plan
+- [ ] Execute plan: Step 1 - Audit and mapping (COMPLETED ✓)
+- [x] Execute plan: Step 2 - Design tokens integration (COMPLETED ✓)
+- [ ] Execute plan: Step 3 - Shared shell/navigation
+- [ ] Execute plan: Step 4 - Document workspace integration
+- [ ] Execute plan: Step 5 - OCR verification UI
+- [ ] Execute plan: Step 6 - Tutor panel integration
+- [ ] Execute plan: Step 7 - Study session integration
+- [ ] Execute plan: Step 8 - Library/navigation integration
+- [ ] Execute plan: Step 9 - Verification and testing

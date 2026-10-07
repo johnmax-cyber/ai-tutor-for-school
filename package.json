@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:pdf": "node --import tsx/esm tests/pdf-extract.test.ts",
+    "test:ocr": "tsx tests/ocr-extract.test.ts",
     "test:validation": "tsx tests/validation.test.ts",
     "test:chunking": "tsx tests/chunking.test.ts",
     "test:e2e": "tsx tests/e2e.test.ts",
@@ -28,11 +29,13 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
+    "canvas": "^3.2.3",
     "next": "16.3.8",
     "openai": "^4.104.0",
     "pdfjs-dist": "^6.4.299",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "tesseract.js": "^6.0.0",
     "uuid": "^10.0.0",
     "zod": "^3.25.76"
   },

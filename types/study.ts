@@ -20,6 +20,7 @@ export interface Topic {
   last_studied: string | null;
   next_review_at: string | null;
   needs_review: boolean;
+  resource_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -77,8 +78,8 @@ export interface MistakePattern {
   hint_count: number;
   last_seen: string;
   recurring: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface NextQuestion {

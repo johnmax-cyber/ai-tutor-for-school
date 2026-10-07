@@ -38,19 +38,19 @@ equal(calculateReviewDate("not_started", new Date("2026-01-01")), null, "not_sta
 // Test learning state
 const learning: TopicStats = {
   totalAttempts: 5,
-  correctAttempts: 2,
-  correctRate: 0.4,
-  last5Accuracy: 0.4,
+  correctAttempts: 3,
+  correctRate: 0.55,
+  last5Accuracy: 0.6,
   last3AllCorrect: false,
   hasRecurringMistakes: false,
   lastStudied: new Date("2026-01-05")
 };
 check("learning -> learning", calculateMasteryState(learning) === "learning");
-equal(
-  calculateReviewDate("learning", new Date("2026-01-05")).toISOString(),
-  new Date("2026-01-08").toISOString(),
-  "learning review date +3 days"
-);
+  equal(
+    calculateReviewDate("learning", new Date("2026-01-05"))!.toISOString(),
+    new Date("2026-01-08").toISOString(),
+    "learning review date +3 days"
+  );
 
 // Test developing state
 const developing: TopicStats = {
@@ -63,11 +63,11 @@ const developing: TopicStats = {
   lastStudied: new Date("2026-01-05")
 };
 check("developing -> developing", calculateMasteryState(developing) === "developing");
-equal(
-  calculateReviewDate("developing", new Date("2026-01-05")).toISOString(),
-  new Date("2026-01-12").toISOString(),
-  "developing review date +7 days"
-);
+  equal(
+    calculateReviewDate("developing", new Date("2026-01-05"))!.toISOString(),
+    new Date("2026-01-12").toISOString(),
+    "developing review date +7 days"
+  );
 
 // Test strong state
 const strong: TopicStats = {
@@ -80,11 +80,11 @@ const strong: TopicStats = {
   lastStudied: new Date("2026-01-05")
 };
 check("strong -> strong", calculateMasteryState(strong) === "strong");
-equal(
-  calculateReviewDate("strong", new Date("2026-01-05")).toISOString(),
-  new Date("2026-02-04").toISOString(),
-  "strong review date +30 days"
-);
+  equal(
+    calculateReviewDate("strong", new Date("2026-01-05"))!.toISOString(),
+    new Date("2026-02-04").toISOString(),
+    "strong review date +30 days"
+  );
 
 // Test review_needed due to low recent accuracy
 const reviewNeededLowAccuracy: TopicStats = {
@@ -97,11 +97,11 @@ const reviewNeededLowAccuracy: TopicStats = {
   lastStudied: new Date("2026-01-05")
 };
 check("low recent accuracy -> review_needed", calculateMasteryState(reviewNeededLowAccuracy) === "review_needed");
-equal(
-  calculateReviewDate("review_needed", new Date("2026-01-05")).toISOString(),
-  new Date("2026-01-06").toISOString(),
-  "review_needed review date +1 day"
-);
+  equal(
+    calculateReviewDate("review_needed", new Date("2026-01-05"))!.toISOString(),
+    new Date("2026-01-06").toISOString(),
+    "review_needed review date +1 day"
+  );
 
 // Test review_needed due to recurring mistakes
 const reviewNeededMistakes: TopicStats = {

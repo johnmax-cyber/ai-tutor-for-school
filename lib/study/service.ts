@@ -1,7 +1,6 @@
 import { StudyDeps } from "./types";
+import { CreateSessionResult, SubmitAttemptResult } from "./types";
 import { 
-  CreateSessionResult, 
-  SubmitAttemptResult,
   StudySession,
   StudyQuestion,
   AttemptResult
@@ -10,13 +9,18 @@ import { createClient } from "@/lib/supabase/server";
 import { generateQuestion } from "@/lib/tutor/generate";
 import { generateNextTurn } from "@/lib/tutor/generate";
 import { retrieveChunksForTopic } from "@/lib/tutor/retrieve";
-import { calculateMasteryState, calculateReviewDate, TopicStats } from "@/lib/study/mastery";
-import { generateHandoff } from "./handoff";
+import { calculateMasteryState, calculateReviewDate } from "@/lib/study/mastery";
+import { generateHandoff, HandoffInput, HandoffMistake } from "./handoff";
+import { computeSessionAnalytics, computeTopicInsights, SessionAccuracy, computeStudyTips, computePerformanceTrend } from "./analytics";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export class StudySessionService {
   constructor(private deps: StudyDeps) {}
 
-  private async getSupabase() {
+  private async getSupabase(): Promise<SupabaseClient> {
+    if (this.deps.getSupabase) {
+      return this.deps.getSupabase();
+    }
     return createClient();
   }
 
@@ -32,7 +36,7 @@ export class StudySessionService {
     // Verify topic ownership
     const { data: topic, error: topicError } = await supabase
       .from("topics")
-      .select("id, name, subject_id, subjects(name as subject_name)")
+      .select("id, name, subject_id, subjects(name)")
       .eq("id", topicId)
       .eq("user_id", userId)
       .single();
@@ -47,7 +51,7 @@ export class StudySessionService {
       .select("resource_id")
       .eq("topic_id", topicId);
 
-    const resourceIds = (topicResources || []).map((r: any) => r.resource_id);
+    const resourceIds = (topicResources || []).map((r: { resource_id: string }) => r.resource_id);
 
     if (resourceIds.length === 0) {
       throw new Error("Topic has no processed documents");
@@ -60,7 +64,7 @@ export class StudySessionService {
       .eq("status", "ready")
       .in("id", resourceIds);
 
-    if (!readyCount || readyCount.count === 0) {
+    if (!readyCount || readyCount === 0) {
       throw new Error("Topic has no processed documents");
     }
 
@@ -86,7 +90,9 @@ export class StudySessionService {
     }
 
     // Retrieve chunks for the topic
-    const chunks = await retrieveChunksForTopic(topic.name, topicId);
+    const chunks = this.deps.retrieve
+      ? await this.deps.retrieve(topic.name, topicId)
+      : await retrieveChunksForTopic(topic.name, topicId);
 
     // Generate first question
     const questionData = await generateQuestion(
@@ -119,7 +125,7 @@ export class StudySessionService {
         id: session.id,
         topic_id: session.topic_id,
         topic_name: topic.name,
-        subject_name: topic.subject_name ?? null,
+        subject_name: topic.subjects?.[0]?.name ?? null,
         subject_id: topic.subject_id ?? null,
         status: session.status,
         started_at: session.started_at,
@@ -170,7 +176,7 @@ export class StudySessionService {
     // Get the question with its answer key
     const { data: question, error: questionError } = await supabase
       .from("questions")
-      .select("id, content, answer_key, explanation, topic_id")
+      .select("id, content, answer_key, explanation, hint, topic_id, concept_id")
       .eq("id", questionId)
       .eq("session_id", sessionId)
       .single();
@@ -190,13 +196,15 @@ export class StudySessionService {
       throw new Error("Topic not found");
     }
 
-    const chunks = await retrieveChunksForTopic(topic.name, question.topic_id);
+    const chunks = this.deps.retrieve
+      ? await this.deps.retrieve(topic.name, question.topic_id)
+      : await retrieveChunksForTopic(topic.name, question.topic_id);
 
     // Evaluate the attempt and generate next question
     const result = await generateNextTurn(
       {
-        id: question.id,
         content: question.content,
+        answer_key: question.answer_key,
         explanation: question.explanation,
         hint: question.hint,
       },
@@ -216,6 +224,7 @@ export class StudySessionService {
         is_correct: result.is_correct,
         feedback: result.feedback,
         attempt_number: 1,
+        created_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -249,8 +258,9 @@ export class StudySessionService {
         .eq("topic_id", question.topic_id)
         .ilike("description", `%${result.misconception ?? ""}%`);
 
-      if (existingMistakes.length > 0) {
-        const mistake = existingMistakes[0];
+      const mistakes = existingMistakes ?? [];
+      if (mistakes.length > 0) {
+        const mistake = mistakes[0];
         await supabase
           .from("mistakes")
           .update({
@@ -284,8 +294,9 @@ export class StudySessionService {
         .eq("topic_id", question.topic_id)
         .ilike("description", `%${result.misconception}%`);
 
-      if (existingMistakes.length > 0) {
-        const mistake = existingMistakes[0];
+      const mistakes = existingMistakes ?? [];
+      if (mistakes.length > 0) {
+        const mistake = mistakes[0];
         await supabase
           .from("mistakes")
           .update({ correct_count: mistake.correct_count + 1 })
@@ -331,7 +342,7 @@ export class StudySessionService {
     // Verify session ownership
     const { data: session, error: sessionError } = await supabase
       .from("study_sessions")
-      .select("*, topics(name, subjects(name as subject_name))")
+      .select("*, topics(name, subject_id, subjects(name))")
       .eq("id", sessionId)
       .eq("user_id", userId)
       .single();
@@ -367,23 +378,66 @@ export class StudySessionService {
     // Update topic mastery one final time
     await this.updateTopicMastery(userId, session.topic_id);
 
+    // Compute session statistics from questions and attempts
+    const questionsAttempted = questions?.length ?? 0;
+    const totalAttemptsCount = attempts?.length ?? 0;
+    const correctAttemptsCount = attempts?.filter(a => a.is_correct).length ?? 0;
+    const hintsUsedCount = attempts?.filter(a => a.hint !== null && a.hint !== "").length ?? 0;
+
     // Generate handoff
-    const handoffInput: any = {
-      topicName: session.topics?.name ?? "Unknown Topic",
-      subjectName: session.topics?.subjects?.subject_name ?? null,
+    // Compute study tips and performance trend for handoff
+    const accuracy = totalAttemptsCount > 0
+      ? correctAttemptsCount / totalAttemptsCount
+      : 0;
+    const avgHints = questions?.length ?? 0 > 0
+      ? hintsUsedCount / (questions?.length ?? 1)
+      : 0;
+    const recurringMistakes = (mistakes ?? [])
+      .filter(m => m.recurring)
+      .map(m => m.description);
+
+    const studyTips = computeStudyTips({
+      accuracy,
+      avgHintsPerQuestion: avgHints,
+      recurringMistakes,
+      totalAttempts: totalAttemptsCount,
+    });
+
+    // Get historical sessions for trend (last 5 sessions)
+    const { data: topicSessions } = await supabase
+      .from("study_sessions")
+      .select("total_attempts, correct_attempts")
+      .eq("user_id", userId)
+      .eq("topic_id", session.topic_id)
+      .order("started_at", { ascending: true });
+
+    const sessionAccuracies = (topicSessions ?? [])
+      .filter(s => s.total_attempts > 0)
+      .slice(-5)
+      .map(s => ({
+        sessionId: "",
+        accuracy: s.correct_attempts / s.total_attempts,
+      }));
+    const performanceTrend = computePerformanceTrend(sessionAccuracies);
+
+    const handoffInput: HandoffInput = {
+      topicName: session.topics?.[0]?.name ?? "Unknown Topic",
+      subjectName: session.topics?.[0]?.subjects?.[0]?.name ?? null,
       questionsCount: questions?.length ?? 0,
       totalAttempts: session.total_attempts,
       correctAttempts: session.correct_attempts,
-      hintsUsed: session.hints_used,
-      mistakes: mistakes?.map(m => ({
+      hintsUsed: hintsUsedCount,
+      mistakes: (mistakes?.map(m => ({
         description: m.description,
         incorrect_count: m.incorrect_count,
         correct_count: m.correct_count,
         hint_count: m.hint_count,
         last_seen: m.last_seen,
         recurring: m.recurring
-      })) ?? [],
-      masteryState: session.topics?.mastery_state ?? "not_started"
+      })) as HandoffMistake[]) ?? [],
+      masteryState: session.topics?.[0]?.mastery_state ?? "not_started",
+      studyTips: studyTips.map(t => t.message),
+      performanceTrend,
     };
 
     const handoffText = generateHandoff(handoffInput);
@@ -396,10 +450,10 @@ export class StudySessionService {
         status: "completed",
         ended_at: now,
         handoff_text: handoffText,
-        questions_attempted: session.questions_attempted,
-        total_attempts: session.total_attempts,
-        correct_attempts: session.correct_attempts,
-        hints_used: session.hints_used,
+        questions_attempted: questionsAttempted,
+        total_attempts: totalAttemptsCount,
+        correct_attempts: correctAttemptsCount,
+        hints_used: hintsUsedCount,
       })
       .eq("id", sessionId)
       .select()
@@ -413,8 +467,9 @@ export class StudySessionService {
       session: {
         id: updatedSession.id,
         topic_id: updatedSession.topic_id,
-        topic_name: updatedSession.topics?.name ?? "",
-        subject_name: updatedSession.topics?.subjects?.subject_name ?? null,
+        topic_name: updatedSession.topics?.[0]?.name ?? "",
+        subject_name: updatedSession.topics?.[0]?.subjects?.[0]?.name ?? null,
+        subject_id: updatedSession.topics?.[0]?.subject_id ?? null,
         status: updatedSession.status,
         started_at: updatedSession.started_at,
         ended_at: updatedSession.ended_at,
@@ -429,6 +484,183 @@ export class StudySessionService {
   }
 
   /**
+   * Get analytics for a specific study session
+   */
+  async getSessionAnalytics(
+    userId: string,
+    sessionId: string
+  ): Promise<import("./types").SessionAnalytics> {
+    const supabase = await this.getSupabase();
+
+    // Verify session ownership
+    const { data: session, error: sessionError } = await supabase
+      .from("study_sessions")
+      .select("id, topic_id, total_attempts, correct_attempts")
+      .eq("id", sessionId)
+      .eq("user_id", userId)
+      .single();
+
+    if (sessionError || !session) {
+      throw new Error("Session not found or access denied");
+    }
+
+    // Get questions for this session
+    const { data: questions } = await supabase
+      .from("questions")
+      .select("id")
+      .eq("session_id", sessionId)
+      .eq("user_id", userId);
+
+    const questionsCount = questions?.length ?? 0;
+
+    // Get attempts for this session
+    const { data: attempts } = await supabase
+      .from("attempts")
+      .select("is_correct, hint")
+      .eq("session_id", sessionId)
+      .eq("user_id", userId);
+
+    const hintsUsed = attempts?.filter((a) => a.hint !== null && a.hint !== "").length ?? 0;
+
+    // Get mistakes for the topic
+    const { data: mistakes } = await supabase
+      .from("mistakes")
+      .select("description, incorrect_count, last_seen")
+      .eq("user_id", userId)
+      .eq("topic_id", session.topic_id)
+      .eq("recurring", true);
+
+    const commonMistakes = (mistakes ?? []).map((m) => ({
+      description: m.description,
+      occurrenceCount: m.incorrect_count,
+      lastSeen: m.last_seen,
+    }));
+
+    // Get historical sessions for trend analysis (last 5 sessions)
+    const { data: topicSessions } = await supabase
+      .from("study_sessions")
+      .select("id, total_attempts, correct_attempts")
+      .eq("user_id", userId)
+      .eq("topic_id", session.topic_id)
+      .order("started_at", { ascending: true });
+
+    const sessionAccuracies: SessionAccuracy[] = (topicSessions ?? [])
+      .filter((s) => s.total_attempts > 0)
+      .slice(-5)
+      .map((s) => ({
+        sessionId: s.id,
+        accuracy: s.correct_attempts / s.total_attempts,
+      }));
+
+    return computeSessionAnalytics({
+      sessionId: session.id,
+      topicId: session.topic_id,
+      totalAttempts: session.total_attempts,
+      correctAttempts: session.correct_attempts,
+      hintsUsed,
+      questionsCount,
+      mistakes: commonMistakes,
+      sessionAccuracies,
+    });
+  }
+
+  /**
+   * Get analytics insights for a topic
+   */
+  async getTopicInsights(
+    userId: string,
+    topicId: string
+  ): Promise<import("./types").TopicInsights> {
+    const supabase = await this.getSupabase();
+
+    // Verify topic ownership
+    const { data: topic, error: topicError } = await supabase
+      .from("topics")
+      .select("id, name, mastery_state, next_review_at, total_attempts, correct_attempts")
+      .eq("id", topicId)
+      .eq("user_id", userId)
+      .single();
+
+    if (topicError || !topic) {
+      throw new Error("Topic not found or access denied");
+    }
+
+    // Get all sessions for this topic
+    const { data: sessions } = await supabase
+      .from("study_sessions")
+      .select("id, total_attempts, correct_attempts")
+      .eq("user_id", userId)
+      .eq("topic_id", topicId)
+      .order("started_at", { ascending: true });
+
+    const totalSessions = sessions?.length ?? 0;
+
+    // Get all questions for this topic (across all sessions)
+    const { data: questions } = await supabase
+      .from("questions")
+      .select("id, session_id")
+      .eq("topic_id", topicId)
+      .eq("user_id", userId);
+
+    const questionIds = (questions ?? []).map((q) => q.id);
+    const questionsCount = questions?.length ?? 0;
+
+    // Get all attempts for these questions
+    let totalAttempts = 0;
+    let correctAttempts = 0;
+    let hintsUsed = 0;
+
+    if (questionIds.length > 0) {
+      const { data: attempts } = await supabase
+        .from("attempts")
+        .select("is_correct, hint")
+        .in("question_id", questionIds)
+        .eq("user_id", userId);
+
+      totalAttempts = attempts?.length ?? 0;
+      correctAttempts = attempts?.filter((a) => a.is_correct).length ?? 0;
+      hintsUsed = attempts?.filter((a) => a.hint !== null && a.hint !== "").length ?? 0;
+    }
+
+    // Get recurring mistakes for this topic
+    const { data: mistakes } = await supabase
+      .from("mistakes")
+      .select("description, incorrect_count, last_seen")
+      .eq("user_id", userId)
+      .eq("topic_id", topicId)
+      .eq("recurring", true);
+
+    const commonMistakes = (mistakes ?? []).map((m) => ({
+      description: m.description,
+      occurrenceCount: m.incorrect_count,
+      lastSeen: m.last_seen,
+    }));
+
+    // Compute session accuracies for trend analysis (last 5 sessions)
+    const sessionAccuracies: SessionAccuracy[] = (sessions ?? [])
+      .filter((s) => s.total_attempts > 0)
+      .slice(-5)
+      .map((s) => ({
+        sessionId: s.id,
+        accuracy: s.correct_attempts / s.total_attempts,
+      }));
+
+    return computeTopicInsights({
+      topicId: topic.id,
+      topicName: topic.name,
+      masteryState: topic.mastery_state as import("./types").TopicInsights["masteryState"],
+      nextReviewAt: topic.next_review_at,
+      totalSessions,
+      totalAttempts,
+      correctAttempts,
+      hintsUsed,
+      questionsCount,
+      mistakes: commonMistakes,
+      sessionAccuracies,
+    });
+  }
+
+  /**
    * List all study sessions for a user
    */
   async listSessions(userId: string): Promise<StudySession[]> {
@@ -438,7 +670,7 @@ export class StudySessionService {
       .select(`
         id,
         topic_id,
-        topics(name, subjects(name as subject_name)),
+        topics(name, subject_id, subjects(name)),
         status,
         started_at,
         ended_at,
@@ -449,15 +681,34 @@ export class StudySessionService {
         hints_used
       `)
       .eq("user_id", userId)
-      .order("started_at", { descending: true });
+      .order("started_at", { ascending: false });
 
     if (error) throw error;
 
-    return (sessions || []).map((session: any) => ({
+    type SessionWithTopic = {
+      id: string;
+      topic_id: string;
+      topics: Array<{
+        name: string;
+        subject_id: string | null;
+        subjects: Array<{ name: string }>;
+      }> | null;
+      status: "active" | "completed" | "abandoned";
+      started_at: string;
+      ended_at: string | null;
+      handoff_text: string | null;
+      questions_attempted: number;
+      total_attempts: number;
+      correct_attempts: number;
+      hints_used: number;
+    };
+
+    return (sessions || []).map((session: SessionWithTopic) => ({
       id: session.id,
       topic_id: session.topic_id,
-      topic_name: session.topics?.name ?? "",
-      subject_name: session.topics?.subjects?.subject_name ?? null,
+      topic_name: session.topics?.[0]?.name ?? "",
+      subject_name: session.topics?.[0]?.subjects?.[0]?.name ?? null,
+      subject_id: session.topics?.[0]?.subject_id ?? null,
       status: session.status,
       started_at: session.started_at,
       ended_at: session.ended_at,
@@ -489,7 +740,7 @@ export class StudySessionService {
       .select(`
         id,
         topic_id,
-        topics(name, subjects(name as subject_name)),
+        topics(name, subject_id, subjects(name)),
         status,
         started_at,
         ended_at,
@@ -525,10 +776,15 @@ export class StudySessionService {
 
     if (attemptsError) throw attemptsError;
 
-    const attempts: AttemptResult[] = (attemptsRaw || []).map((a: any) => ({
+    const attempts: AttemptResult[] = (attemptsRaw || []).map((a: {
+      is_correct: boolean;
+      feedback: string | null;
+      hint: string | null;
+      attempt_number: number;
+    }) => ({
       id: "",
       is_correct: a.is_correct,
-      feedback: a.feedback,
+      feedback: a.feedback ?? "",
       hint: a.hint,
       attempt_number: a.attempt_number,
     }));
@@ -537,8 +793,9 @@ export class StudySessionService {
       session: {
         id: session.id,
         topic_id: session.topic_id,
-        topic_name: session.topics?.name ?? "",
-        subject_name: session.topics?.subjects?.subject_name ?? null,
+        topic_name: session.topics?.[0]?.name ?? "",
+        subject_name: session.topics?.[0]?.subjects?.[0]?.name ?? null,
+        subject_id: session.topics?.[0]?.subject_id ?? null,
         status: session.status,
         started_at: session.started_at,
         ended_at: session.ended_at,
@@ -548,11 +805,16 @@ export class StudySessionService {
         correct_attempts: session.correct_attempts,
         hints_used: session.hints_used,
       },
-      questions: (questions || []).map((q: any) => ({
+      questions: (questions || []).map((q: {
+        id: string;
+        content: string;
+        explanation: string | null;
+        hint: string | null;
+      }) => ({
         id: q.id,
         content: q.content,
-        explanation: q.explanation,
-        hint: q.hint,
+        explanation: q.explanation ?? "",
+        hint: q.hint ?? "",
         sources: [],
       })),
       attempts,
@@ -575,7 +837,7 @@ export class StudySessionService {
       .select("id")
       .eq("topic_id", topicId);
 
-    const questionIds = (questions || []).map((q: any) => q.id);
+    const questionIds = (questions || []).map((q: { id: string }) => q.id);
 
     if (questionIds.length === 0) {
       // No questions yet, set to not_started
@@ -636,7 +898,12 @@ export class StudySessionService {
       .eq("topic_id", topicId)
       .eq("recurring", true);
 
-    const hasRecurringMistakes = mistakes && mistakes.length > 0;
+    const hasRecurringMistakes = Boolean(mistakes && mistakes.length > 0);
+
+    const lastAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+    const lastStudiedDate = lastAttempt?.created_at
+      ? new Date(lastAttempt.created_at)
+      : (lastAttempt ? new Date() : null);
 
     // Calculate mastery state
     const masteryState = calculateMasteryState({
@@ -646,7 +913,7 @@ export class StudySessionService {
       last5Accuracy,
       last3AllCorrect,
       hasRecurringMistakes,
-      lastStudied: attempts.length > 0 ? new Date(attempts[attempts.length - 1].created_at) : null
+      lastStudied: lastStudiedDate
     });
 
     // Calculate next review date
@@ -659,7 +926,7 @@ export class StudySessionService {
         mastery_state: masteryState,
         total_attempts: totalAttempts,
         correct_attempts: correctAttempts,
-        last_studied: attempts.length > 0 ? new Date(attempts[attempts.length - 1].created_at).toISOString() : null,
+        last_studied: lastStudiedDate ? lastStudiedDate.toISOString() : null,
         next_review_at: nextReviewAt ? nextReviewAt.toISOString() : null
       })
       .eq("id", topicId);

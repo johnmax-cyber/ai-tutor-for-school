@@ -66,7 +66,8 @@ contains(noMistakesHandoff, "No specific review needed", "no mistakes shows no r
 const lowPerfInput = {
   ...baseInput,
   correctAttempts: 2,
-  totalAttempts: 10
+  totalAttempts: 10,
+  mistakes: [] as MistakePattern[]
 };
 const lowPerfHandoff = generateHandoff(lowPerfInput);
 contains(lowPerfHandoff, "Review recommended based on performance", "low performance shows review needed");

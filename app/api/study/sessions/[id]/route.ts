@@ -33,7 +33,7 @@ export async function GET(
     const result = await studySessionService.getSession(userId, id);
     return NextResponse.json(result);
   } catch (error) {
-    if (error.message === "Session not found or access denied") {
+    if (error instanceof Error && error.message === "Session not found or access denied") {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
     console.error("Failed to get study session:", error);

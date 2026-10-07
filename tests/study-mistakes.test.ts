@@ -58,8 +58,8 @@ check("no longer recurring (3 incorrect, 2 correct)", correctedMistake.recurring
 
 // Test isMistakeRecurring function
 check("isMistakeRecurring returns true for recurring", isMistakeRecurring({ ...existingMistake, incorrect_count: 2, correct_count: 0, recurring: true }));
-check("isMistakeRecurring returns false for non-recurring", isMistakeRecurring({ ...existingMistake, incorrect_count: 1, correct_count: 0, recurring: false }));
-check("isMistakeRecurring returns false when corrected", isMistakeRecurring({ ...existingMistake, incorrect_count: 2, correct_count: 2, recurring: false }));
+check("isMistakeRecurring returns false for non-recurring", !isMistakeRecurring({ ...existingMistake, incorrect_count: 1, correct_count: 0, recurring: false }));
+check("isMistakeRecurring returns false when corrected", !isMistakeRecurring({ ...existingMistake, incorrect_count: 2, correct_count: 2, recurring: false }));
 
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exitCode = 1;

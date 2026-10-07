@@ -16,9 +16,10 @@ export function SignOutButton() {
     <button
       type="button"
       onClick={handleSignOut}
-      className="rounded-md border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-700"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container border border-surface-container-high text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high text-xs sm:text-sm font-medium transition-colors"
     >
-      Sign out
+      <span className="material-symbols-outlined text-[16px]">logout</span>
+      <span>Sign out</span>
     </button>
   );
 }

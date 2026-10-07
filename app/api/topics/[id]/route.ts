@@ -29,7 +29,7 @@ export async function GET(
         id,
         name,
         description,
-        subjects(name as subject_name),
+        subjects(name),
         mastery_state,
         total_attempts,
         correct_attempts,
@@ -53,7 +53,7 @@ export async function GET(
       .select("resource_id")
       .eq("topic_id", id);
 
-    const resourceIds = (topicResources || []).map((r: any) => r.resource_id);
+    const resourceIds = (topicResources || []).map((r: { resource_id: string }) => r.resource_id);
 
     let readyResourceCount = 0;
     if (resourceIds.length > 0) {
@@ -71,7 +71,7 @@ export async function GET(
         id: topic.id,
         name: topic.name,
         description: topic.description,
-        subject_name: topic.subjects?.subject_name ?? null,
+        subject_name: topic.subjects?.[0]?.name ?? null,
         mastery_state: topic.mastery_state,
         total_attempts: topic.total_attempts,
         correct_attempts: topic.correct_attempts,
@@ -82,7 +82,7 @@ export async function GET(
       }
     });
   } catch (error) {
-    if (error.message === "Topic not found") {
+    if (error instanceof Error && error.message === "Topic not found") {
       return NextResponse.json({ error: "Topic not found" }, { status: 404 });
     }
     console.error("Failed to load topic:", error);
@@ -161,7 +161,12 @@ export async function PATCH(
     }
 
     // Build update object
-    const updateData: any = {};
+    type TopicUpdateData = {
+      name?: string;
+      description?: string;
+      subject_id?: string | null;
+    };
+    const updateData: TopicUpdateData = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
     if (subjectId !== undefined) updateData.subject_id = subjectId;
@@ -170,12 +175,25 @@ export async function PATCH(
       return NextResponse.json({ error: "No changes provided" }, { status: 400 });
     }
 
-    // Update topic
+    // Update topic and return full record with subject
     const { data: topic, error: topicError } = await supabase
       .from("topics")
       .update(updateData)
       .eq("id", id)
       .eq("user_id", userId)
+      .select(`
+        id,
+        name,
+        description,
+        subjects(name),
+        mastery_state,
+        total_attempts,
+        correct_attempts,
+        hints_used,
+        retry_count,
+        last_studied,
+        next_review_at
+      `)
       .single();
 
     if (topicError || !topic) {
@@ -187,7 +205,7 @@ export async function PATCH(
         id: topic.id,
         name: topic.name,
         description: topic.description,
-        subject_name: topic.subjects?.subject_name ?? null,
+        subject_name: topic.subjects?.[0]?.name ?? null,
         mastery_state: topic.mastery_state,
         total_attempts: topic.total_attempts,
         correct_attempts: topic.correct_attempts,
@@ -200,7 +218,7 @@ export async function PATCH(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
-    if (error.message === "Topic not found") {
+    if (error instanceof Error && error.message === "Topic not found") {
       return NextResponse.json({ error: "Topic not found" }, { status: 404 });
     }
     console.error("Failed to update topic:", error);
@@ -253,7 +271,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error.message === "Topic not found") {
+    if (error instanceof Error && error.message === "Topic not found") {
       return NextResponse.json({ error: "Topic not found" }, { status: 404 });
     }
     console.error("Failed to delete topic:", error);

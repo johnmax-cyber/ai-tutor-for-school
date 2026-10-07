@@ -62,10 +62,10 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
-    if (error.message === "Topic not found or access denied") {
+    if (error instanceof Error && error.message === "Topic not found or access denied") {
       return NextResponse.json({ error: "Topic not found" }, { status: 404 });
     }
-    if (error.message === "Topic has no processed documents") {
+    if (error instanceof Error && error.message === "Topic has no processed documents") {
       return NextResponse.json({ error: "Topic has no processed documents" }, { status: 422 });
     }
     console.error("Failed to create study session:", error);

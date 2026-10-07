@@ -65,6 +65,7 @@ export function finalizeAnswer(
       resource_title: chunk.resource_title,
       page_number: chunk.page_number,
       content: chunk.content,
+      rank: 1, // rank is not available in this context, default to 1
     };
   });
 

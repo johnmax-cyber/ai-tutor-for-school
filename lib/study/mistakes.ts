@@ -25,7 +25,7 @@ export function updateMistakeRecord(
   aiMisconception: string | null
 ): MistakePattern {
   const description = aiMisconception ?? attempt.substring(0, 100); // Fallback to attempt text
-  const normalized = normalizeDescription(description);
+  const _normalized = normalizeDescription(description);
 
   if (existingMistake) {
     // Update existing mistake
@@ -82,4 +82,47 @@ export function updateMistakeOnCorrectAttempt(
  */
 export function isMistakeRecurring(mistake: MistakePattern): boolean {
   return mistake.incorrect_count >= 2 && mistake.correct_count < 2;
+}
+
+/**
+ * Input for computing mistake patterns from raw attempt data
+ */
+export interface MistakePatternInput {
+  description: string;
+  incorrectCount: number;
+  lastSeen: string;
+}
+
+/**
+ * Group and aggregate raw mistake data into recurring misconception patterns
+ */
+export function getMistakePatterns(inputs: MistakePatternInput[]): MistakePatternInput[] {
+  const grouped = new Map<string, { total: number; lastSeen: string; originalDescription: string }>();
+
+  for (const input of inputs) {
+    const normalized = input.description.toLowerCase().trim();
+    const existing = grouped.get(normalized);
+    if (existing) {
+      existing.total += input.incorrectCount;
+      if (input.lastSeen > existing.lastSeen) {
+        existing.lastSeen = input.lastSeen;
+        existing.originalDescription = input.description;
+      }
+    } else {
+      grouped.set(normalized, {
+        total: input.incorrectCount,
+        lastSeen: input.lastSeen,
+        originalDescription: input.description,
+      });
+    }
+  }
+
+  return Array.from(grouped.entries())
+    .map(([_, data]) => ({
+      description: data.originalDescription,
+      incorrectCount: data.total,
+      lastSeen: data.lastSeen,
+    }))
+    .filter((m) => m.incorrectCount >= 2)
+    .sort((a, b) => b.incorrectCount - a.incorrectCount);
 }

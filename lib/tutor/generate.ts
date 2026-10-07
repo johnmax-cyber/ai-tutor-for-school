@@ -102,7 +102,7 @@ function escapeXml(text: string): string {
 }
 
 async function callAI(
-  ai: any,
+  ai: AIService,
   messages: ChatMessage[]
 ): Promise<string> {
   const result = await ai.chat(messages);
@@ -129,7 +129,7 @@ export interface GeneratedNextTurn {
 export async function generateQuestion(
   chunks: RetrievedChunk[],
   topicName: string,
-  ai: any
+  ai: AIService
 ): Promise<GeneratedQuestion> {
   const messages = buildQuestionMessages(topicName, chunks);
   
@@ -163,7 +163,7 @@ export async function generateNextTurn(
   question: { content: string; answer_key: string; explanation: string; hint: string },
   studentAnswer: string,
   chunks: RetrievedChunk[],
-  ai: any
+  ai: AIService
 ): Promise<GeneratedNextTurn> {
   const messages = buildNextTurnMessages(
     question.content,

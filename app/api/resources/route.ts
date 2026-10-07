@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText } from "@/lib/documents/pdf";
 import { chunkDocument, verifyDocumentCoverage } from "@/lib/documents/chunking";
-import { assessTextQuality } from "@/lib/documents/text-quality";
 import { validatePdf, MAX_PDF_BYTES } from "@/lib/resources/validation";
 import { buildStoragePath } from "@/lib/supabase/storage";
 import type { Resource } from "@/lib/resources/types";
@@ -109,17 +108,6 @@ export async function POST(request: Request) {
 
   try {
     const doc = await extractPdfText(buffer);
-
-    const quality = assessTextQuality(doc.pages);
-    if (!quality.ok) {
-      const errorMessage =
-        "No readable text found. This PDF looks scanned or photographed. OCR is not supported yet.";
-      await supabase
-        .from("resources")
-        .update({ status: "failed", error_message: errorMessage })
-        .eq("id", resourceId);
-      return jsonError(errorMessage, 422);
-    }
 
     // Chunk pages and prepare for insertion
     const chunks = chunkDocument(doc.pages);

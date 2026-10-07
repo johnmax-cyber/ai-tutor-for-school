@@ -81,13 +81,13 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
-    if (error.message === "Topic not found") {
+    if (error instanceof Error && error.message === "Topic not found") {
       return NextResponse.json({ error: "Topic not found" }, { status: 404 });
     }
-    if (error.message === "Resource not found") {
+    if (error instanceof Error && error.message === "Resource not found") {
       return NextResponse.json({ error: "Resource not found" }, { status: 404 });
     }
-    if (error.message === "Resource is not ready for assignment") {
+    if (error instanceof Error && error.message === "Resource is not ready for assignment") {
       return NextResponse.json({ error: "Resource is not ready for assignment" }, { status: 400 });
     }
     console.error("Failed to assign resource to topic:", error);
@@ -158,10 +158,10 @@ export async function DELETE(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
-    if (error.message === "Topic not found") {
+    if (error instanceof Error && error.message === "Topic not found") {
       return NextResponse.json({ error: "Topic not found" }, { status: 404 });
     }
-    if (error.message === "Resource not found") {
+    if (error instanceof Error && error.message === "Resource not found") {
       return NextResponse.json({ error: "Resource not found" }, { status: 404 });
     }
     console.error("Failed to unassign resource from topic:", error);
