@@ -152,7 +152,7 @@ function buildPptx(opts: {
     zip.file(`ppt/slides/_rels/slide${slideNum}.xml.rels`, slideRelsXml);
 
     if (slide.notes) {
-      let notesXml = `<?xml version="1.0" encoding="UTF-8"?>
+      const notesXml = `<?xml version="1.0" encoding="UTF-8"?>
 <p:notesSlide xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
   <p:cSld><p:spTree>
     <p:sp>
@@ -175,6 +175,7 @@ function buildPptx(opts: {
 }
 
 function makePng(width: number, height: number): Uint8Array {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- `canvas` is a Node-only optional dependency; require avoids bundling it in the browser build.
   const { createCanvas } = require("canvas");
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
@@ -207,6 +208,7 @@ async function main() {
 
   console.log("\n=== extractPptxText (with pizzip fixtures) ===");
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock doesn't implement full SupabaseClient
   const supabase = createMockSupabase() as any;
   const userId = "test-user";
   const resourceId = "test-resource";

@@ -22,7 +22,7 @@ function check(name: string, actual: boolean, detail?: string) {
 
 function makeThenable(data: unknown, error: unknown = null) {
   return {
-    then(onFulfilled?: (val: unknown) => unknown, onRejected?: (err: unknown) => unknown) {
+    then(onFulfilled?: (val: unknown) => unknown, _onRejected?: (err: unknown) => unknown) {
       if (error) return Promise.reject(error);
       return Promise.resolve(data).then(onFulfilled);
     },
@@ -34,12 +34,12 @@ function makeThenable(data: unknown, error: unknown = null) {
 
 function createMockSupabase(
   images: Array<{ storagePath: string; data: Uint8Array }> = [],
-  opts: { existingResourceImages?: Array<any>; resourceData?: Uint8Array | null } = {},
+  opts: { existingResourceImages?: Array<Record<string, unknown>>; resourceData?: Uint8Array | null } = {},
 ) {
   const uploadedImages: Array<{ path: string; data: Uint8Array }> = [];
-  const resourceImages: Array<any> = opts.existingResourceImages ? [...opts.existingResourceImages] : [];
-  const resourceChunks: Array<any> = [];
-  const resources: Map<string, any> = new Map();
+  const resourceImages: Array<Record<string, unknown>> = opts.existingResourceImages ? [...opts.existingResourceImages] : [];
+  const resourceChunks: Array<Record<string, unknown>> = [];
+  const resources: Map<string, Record<string, unknown>> = new Map();
 
   return {
     storage: {
@@ -72,14 +72,14 @@ function createMockSupabase(
               },
             }),
           }),
-          update: (data: any) => ({
+          update: (data: Record<string, unknown>) => ({
             eq: (col: string, val: string) => {
               const resource = resources.get(val);
               if (resource) { Object.assign(resource, data); return { error: null }; }
               return { error: { message: "Not found" } };
             },
           }),
-          insert: (data: any) => {
+          insert: (data: Record<string, unknown>) => {
             const id = `res-${Date.now()}-${Math.random()}`;
             const resource = { ...data, id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
             resources.set(id, resource);
@@ -89,11 +89,11 @@ function createMockSupabase(
       }
       if (table === "resource_images") {
         return {
-          insert: (data: any[]) => { resourceImages.push(...(Array.isArray(data) ? data : [data])); return { error: null }; },
-          update: (data: any) => ({
+          insert: (data: Record<string, unknown>) => { resourceImages.push(...(Array.isArray(data) ? data : [data])); return { error: null }; },
+          update: (data: Record<string, unknown>) => ({
             eq: (col: string, val: string) => ({
-              eq: (col2: string, val2: any) => ({
-                eq: (col3: string, val3: any) => {
+            eq: (col2: string, val2: Record<string, unknown>) => ({
+              eq: (col3: string, val3: Record<string, unknown>) => {
                   const idx = resourceImages.findIndex(r => r.resource_id === val && r[col2] === val2 && r[col3] === val3);
                   if (idx >= 0) { Object.assign(resourceImages[idx], data); return { error: null }; }
                   return { error: { message: "Not found" } };
@@ -116,9 +116,9 @@ function createMockSupabase(
             eq: (col: string, val: string) => ({
               like: (col2: string, pattern: string) => {
                 const regex = new RegExp("^" + pattern.replace(/%/g, ".*") + "$");
-                const removed = resourceChunks.filter(c => c[col] === val && regex.test(c[col2] ?? ""));
+                const removed = resourceChunks.filter(c => c[col] === val && regex.test((c[col2] as string) ?? ""));
                 resourceChunks.splice(0, resourceChunks.length,
-                  ...resourceChunks.filter(c => !(c[col] === val && regex.test(c[col2] ?? ""))));
+                  ...resourceChunks.filter(c => !(c[col] === val && regex.test((c[col2] as string) ?? ""))));
                 return makeThenable({ data: removed, error: null });
               },
               then(onFulfilled?: (val: unknown) => unknown) {
@@ -126,11 +126,11 @@ function createMockSupabase(
               },
             }),
           }),
-          insert: (data: any[]) => { resourceChunks.push(...(Array.isArray(data) ? data : [data])); return { error: null }; },
+          insert: (data: Record<string, unknown>[]) => { resourceChunks.push(...(Array.isArray(data) ? data : [data])); return { error: null }; },
           select: (cols: string) => ({
             eq: (col: string, val: string) => ({
-              eq: (col2: string, val2: any) => ({
-                eq: (col3: string, val3: any) => ({
+              eq: (col2: string, val2: Record<string, unknown>) => ({
+                eq: (col3: string, val3: Record<string, unknown>) => ({
                   limit: (lim: number) => ({
                     single: async () => {
                       const found = resourceChunks.find(r => r[col] === val && r[col2] === val2 && r[col3] === val3);
@@ -155,6 +155,7 @@ function createMockSupabase(
 }
 
 function makePng(width: number, height: number): Uint8Array {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- `canvas` is a Node-only optional dependency; require avoids bundling it in the browser build.
   const { createCanvas } = require("canvas");
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
@@ -267,7 +268,7 @@ function buildPptx(opts: {
   return new Uint8Array(zip.generate({ type: "uint8array" }));
 }
 
-function buildResourceRow(resourceId: string, userId: string): any {
+function buildResourceRow(resourceId: string, userId: string): Record<string, unknown> {
   return {
     id: resourceId,
     user_id: userId,
@@ -305,6 +306,7 @@ async function main() {
 
   // Test 2: extractPptxText extracts images
   console.log("\n--- Test 2: extractPptxText extracts images ---");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock doesn't implement full SupabaseClient
   const supabase = createMockSupabase() as any;
   const userId = "test-user";
   const resourceId = "test-resource";
@@ -331,6 +333,7 @@ async function main() {
 
   // Test 5: MAX_VISION_IMAGES_PER_RESOURCE limit
   console.log("\n--- Test 5: MAX_VISION_IMAGES_PER_RESOURCE limit ---");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- dynamic import of internal constant for the constant-exports test
   const { MAX_VISION_IMAGES_PER_RESOURCE } = require("../lib/documents/types");
   check("MAX_VISION_IMAGES_PER_RESOURCE is 10", MAX_VISION_IMAGES_PER_RESOURCE === 10);
 
@@ -377,6 +380,7 @@ async function main() {
     const supabase = createMockSupabase([], {
       existingResourceImages: existingImages,
       resourceData: pptxWithImage,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock doesn't implement full SupabaseClient
     }) as any;
     const resourceRow = buildResourceRow(resourceId, userId);
     supabase._test.resources.set(resourceId, resourceRow);
@@ -384,7 +388,7 @@ async function main() {
     await processResource(resourceId, supabase, mockVisionAI);
 
     check("vision not called on retry (idempotent)", mockVisionAI.getVisionCallCount() === 0);
-    const visionChunks = supabase._test.resourceChunks.filter((c: any) => c.content.startsWith("[Image description]"));
+    const visionChunks = supabase._test.resourceChunks.filter((c: Record<string, unknown>) => (c.content as string).startsWith("[Image description]"));
     check("vision chunks inserted", visionChunks.length === 1);
     check("vision description from DB preserved", visionChunks[0]?.content === "[Image description] Diagram showing a flowchart.");
   }
@@ -397,11 +401,12 @@ async function main() {
     const expectedPrefix = `extracted-images/${userId}/${resourceId}/`;
 
     // Extract images and verify they have the correct prefix
-    const supabase = createMockSupabase() as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock doesn't implement full SupabaseClient
+  const supabase = createMockSupabase() as any;
     const extractResult = await extractPptxText(pptxWithImage, supabase, userId, resourceId);
 
     check("extracted images have correct prefix",
-      extractResult.images.every((img: any) => img.storagePath.startsWith(expectedPrefix)));
+      extractResult.images.every((img: { storagePath: string }) => img.storagePath.startsWith(expectedPrefix)));
 
     // Verify a cross-user path would be rejected
     const crossUserPath = "extracted-images/other-user/ownership-resource/slide-1-0.png";

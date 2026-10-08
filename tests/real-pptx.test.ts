@@ -49,6 +49,7 @@ async function main() {
     return;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test mock doesn't implement full SupabaseClient
   const supabase = createMockSupabase() as any;
   const userId = "test-user";
   const resourceId = "test-resource";

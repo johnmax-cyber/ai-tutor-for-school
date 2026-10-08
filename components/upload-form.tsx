@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -43,11 +43,8 @@ export function UploadForm({ embeddingsEnabled = false }: { embeddingsEnabled?: 
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showEmbeddingNotice, setShowEmbeddingNotice] = useState(embeddingsEnabled);
 
-  useEffect(() => {
-    setShowEmbeddingNotice(embeddingsEnabled);
-  }, [embeddingsEnabled]);
+  const showEmbeddingNotice = embeddingsEnabled;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
