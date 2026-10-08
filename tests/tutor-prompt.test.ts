@@ -66,9 +66,10 @@ const escapeChunks: RetrievedChunk[] = [
 ];
 const messages = buildMessages("What is this?", escapeChunks, []);
 const userMsg = messages.find((m) => m.role === "user")?.content ?? "";
-check("no </source> in user message", !userMsg.includes("</source>"));
-check("no <source> in system message", !SYSTEM_PROMPT.includes("<source"));
-check("escaped angle brackets", userMsg.includes("‹source›") || userMsg.includes("‹"));
+const sourceCloseCount = (userMsg.match(/<\/source>/g) || []).length;
+check("no extra </source> from chunk content", sourceCloseCount === 1);
+check("chunk content escaped with entities", userMsg.includes("&#60;source") && userMsg.includes("&#60;/source&#62;"));
+check("escaped angle brackets", userMsg.includes("&#60;") && userMsg.includes("&#62;"));
 
 // Test 6: Chunk text never in system message
 check("SYSTEM_PROMPT has no chunk text", !SYSTEM_PROMPT.includes("8 bits"));

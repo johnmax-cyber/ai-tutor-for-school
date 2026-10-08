@@ -28,6 +28,32 @@ async function getWorker(): Promise<Awaited<ReturnType<typeof createWorker>>> {
 }
 
 /**
+ * Recognize text in an already-decoded image buffer using the shared tesseract
+ * worker. Returns the raw tesseract result for a single image.
+ */
+export async function recognizeImageBuffer(
+  imageBuffer: Uint8Array | Buffer,
+): Promise<RawOcrResult> {
+  const worker = (await getWorker()) as unknown as WorkerWithRecognize;
+
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "ocr-img-"));
+  const filePath = path.join(tmpDir, "image.png");
+  await fs.writeFile(filePath, Buffer.from(imageBuffer));
+
+  try {
+    const { data: result } = await worker.recognize(filePath);
+    return result;
+  } finally {
+    try {
+      await fs.unlink(filePath);
+      await fs.rmdir(tmpDir);
+    } catch {
+      // best-effort cleanup
+    }
+  }
+}
+
+/**
  * Perform OCR on a PDF buffer.
  * Returns extracted text per page with confidence scores.
  */

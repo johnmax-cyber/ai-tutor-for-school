@@ -3,10 +3,14 @@ import { retrieveChunks, RetrievedChunk } from "./retrieve";
 import { buildMessages, NOT_FOUND } from "./prompt";
 import { parseModelOutput, finalizeAnswer } from "./grounding";
 import { TutorAnswer } from "@/types/tutor";
+import { describeImage, DescribeImageResult } from "@/lib/documents/vision";
 
 export interface TutorInput {
   question: string;
   resourceId?: string;
+  imageBuffer?: Uint8Array | null;
+  imageMimeType?: string | null;
+  imagePage?: number | null;
   history: { role: "user" | "assistant"; content: string }[];
 }
 
@@ -20,8 +24,37 @@ export async function handleTutorQuestion(
   input: TutorInput
 ): Promise<TutorAnswer> {
   const chunks = await deps.retrieve(input.question, input.resourceId);
+  const allChunks: RetrievedChunk[] = [...chunks];
 
-  if (chunks.length === 0) {
+  let visionResult: DescribeImageResult | null = null;
+
+  // If an image is provided, use vision to describe it and add to context
+  if (input.imageBuffer && input.imageMimeType) {
+    try {
+      visionResult = await describeImage(
+        input.imageBuffer,
+        input.imageMimeType,
+        undefined,
+        deps.ai
+      );
+       // Add vision description as a pseudo-chunk for citations
+      const visionChunk: RetrievedChunk = {
+        id: "vision-" + Date.now(),
+        resource_id: input.resourceId ?? "vision",
+        resource_title: "Image (vision)",
+        page_number: input.imagePage ?? 0,
+        chunk_index: -1,
+        content: `[Image description] ${visionResult.description}`,
+        rank: 1,
+      };
+      allChunks.unshift(visionChunk);
+    } catch (err) {
+      // Vision failure should not break the tutor flow
+      console.warn("Tutor vision failed:", err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  if (allChunks.length === 0) {
     return {
       answer: NOT_FOUND,
       citations: [],
@@ -31,7 +64,7 @@ export async function handleTutorQuestion(
     };
   }
 
-  const messages = buildMessages(input.question, chunks, input.history);
+  const messages = buildMessages(input.question, allChunks, input.history);
 
   let parsed: { answer: string; insufficient_context: boolean } | null = null;
   let rawText = "";
@@ -59,5 +92,15 @@ export async function handleTutorQuestion(
     }
   }
 
-  return finalizeAnswer(parsed, rawText, chunks, model);
+  const answer = finalizeAnswer(parsed, rawText, allChunks, model);
+
+  // If vision was used, include vision model in the answer metadata
+  if (visionResult) {
+    return {
+      ...answer,
+      model: visionResult.model,
+    };
+  }
+
+  return answer;
 }

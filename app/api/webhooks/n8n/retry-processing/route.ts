@@ -7,7 +7,11 @@ import {
   verifyResourceOwnership,
   isPreferenceEnabled,
 } from "@/lib/automation/auth";
-import { processResource } from "@/lib/resources/processing";
+import {
+  evaluateRetryGates,
+  processResource,
+  type RetryGateResult,
+} from "@/lib/resources/processing";
 import { NotificationService } from "@/lib/notifications/service";
 
 export const runtime = "nodejs";
@@ -54,6 +58,16 @@ export async function POST(request: Request) {
     if (!enabled) {
       return NextResponse.json(
         { skipped: true, reason: "processing_retry_disabled" },
+        { status: 200 },
+      );
+    }
+
+    // Retry safety: skip resources that have exhausted retries, are too recent,
+    // or are marked as a permanent failure (never retry these).
+    const gate: RetryGateResult = evaluateRetryGates(resource);
+    if (!gate.retryable) {
+      return NextResponse.json(
+        { skipped: true, reason: gate.permanent ? "permanent_failure" : "retry_gate" },
         { status: 200 },
       );
     }

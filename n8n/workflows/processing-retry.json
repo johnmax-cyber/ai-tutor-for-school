@@ -41,7 +41,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{$env.NEXT_PUBLIC_SUPABASE_URL}}/rest/v1/resources?select=id,user_id,updated_at&user_id=eq.{{$json.user_id}}&status=in.(processing,failed)",
+        "url": "={{$env.NEXT_PUBLIC_SUPABASE_URL}}/rest/v1/resources?select=id,user_id,storage_path,mime_type,retry_count,processing_started_at,processing_metadata&user_id=eq.{{$json.user_id}}&status=in.(processing,failed)&retry_count=lte.2",
         "authentication": "none",
         "headerParameters": {
           "parameters": [
@@ -68,17 +68,24 @@
     {
       "parameters": {
         "conditions": {
+          "string": [
+            {
+              "value1": "=notPermanent:{{ $json.processing_metadata ? $json.processing_metadata.permanent_failure : false }}",
+              "operation": "notEqual",
+              "value2": "notPermanent:true"
+            }
+          ],
           "number": [
             {
-              "value1": "={{ Date.parse($json.updated_at) }}",
+              "value1": "=if(isEmpty($json.processing_started_at), 0, Date.parse($json.processing_started_at))",
               "operation": "smaller",
-              "value2": "={{ Date.now() - 300000 }}"
+              "value2": "= {{ Date.now() - 600000 }}"
             }
           ]
         }
       },
       "id": "a1b2c3d4-0001-4000-8000-000000000006",
-      "name": "IF updated_at older than 5 minutes",
+      "name": "IF retry gates (not permanent, started >10m ago)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [1480, 200]
@@ -111,8 +118,8 @@
     "Supabase: retry-enabled users": { "main": [ [ { "node": "Split in batches (users)", "type": "main", "index": 0 } ] ] },
     "Split in batches (users)": { "main": [ [ { "node": "Supabase: pending resources", "type": "main", "index": 0 } ] ] },
     "Supabase: pending resources": { "main": [ [ { "node": "Split in batches (resources)", "type": "main", "index": 0 } ] ] },
-    "Split in batches (resources)": { "main": [ [ { "node": "IF updated_at older than 5 minutes", "type": "main", "index": 0 } ] ] },
-    "IF updated_at older than 5 minutes": { "main": [ [ { "node": "Call retry-processing webhook", "type": "main", "index": 0 } ] ] }
+    "Split in batches (resources)": { "main": [ [ { "node": "IF retry gates (not permanent, started >10m ago)", "type": "main", "index": 0 } ] ] },
+    "IF retry gates (not permanent, started >10m ago)": { "main": [ [ { "node": "Call retry-processing webhook", "type": "main", "index": 0 } ] ] }
   },
   "active": false,
   "settings": { "executionTimeout": 3600, "timezone": "UTC" },

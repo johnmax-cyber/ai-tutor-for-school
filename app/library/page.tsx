@@ -16,7 +16,7 @@ function statusBadge(status: Resource["status"]) {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary/10 text-secondary border border-secondary/20">
           <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-          Ready &amp; Indexed
+          Ready & Indexed
         </span>
       );
     case "failed":
@@ -30,16 +30,92 @@ function statusBadge(status: Resource["status"]) {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-warning/10 text-warning border border-warning/20">
           <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span>
-          OCR Processing
+          Processing
         </span>
       );
     default:
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant">
-          Pending
+          Uploaded
         </span>
       );
   }
+}
+
+function fileTypeIcon(mimeType: string) {
+  switch (mimeType) {
+    case "application/pdf":
+      return (
+        <span className="material-symbols-outlined text-primary" aria-hidden="true">
+          picture_as_pdf
+        </span>
+      );
+    case "image/png":
+    case "image/jpeg":
+    case "image/jpg":
+      return (
+        <span className="material-symbols-outlined text-tertiary" aria-hidden="true">
+          image
+        </span>
+      );
+    case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+      return (
+        <span className="material-symbols-outlined text-secondary" aria-hidden="true">
+          slideshow
+        </span>
+      );
+    case "text/plain":
+    case "text/markdown":
+    case "text/x-markdown":
+      return (
+        <span className="material-symbols-outlined text-outline" aria-hidden="true">
+          description
+        </span>
+      );
+    default:
+      return (
+        <span className="material-symbols-outlined text-outline" aria-hidden="true">
+          insert_drive_file
+        </span>
+      );
+  }
+}
+
+function fileTypeLabel(mimeType: string) {
+  switch (mimeType) {
+    case "application/pdf":
+      return "PDF";
+    case "image/png":
+    case "image/jpeg":
+    case "image/jpg":
+      return "Image";
+    case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+      return "Slides";
+    case "text/plain":
+      return "Text";
+    case "text/markdown":
+    case "text/x-markdown":
+      return "Markdown";
+    default:
+      return "File";
+  }
+}
+
+function warningsIndicator(metadata: Record<string, unknown> | null | undefined) {
+  if (!metadata) return null;
+  const hasWarnings = metadata.vision_failed && typeof metadata.vision_failed === "number" && metadata.vision_failed > 0;
+  const hasOcrWarnings = metadata.ocr_confidence !== undefined && metadata.ocr_confidence !== null && typeof metadata.ocr_confidence === "number" && metadata.ocr_confidence < 70;
+  const hasCoverageWarnings = Object.keys(metadata).some(k => k.includes("coverage") || k.includes("gap"));
+  
+  if (hasWarnings || hasOcrWarnings || hasCoverageWarnings) {
+    return (
+      <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-warning/10 text-warning border border-warning/20" title="Processed with warnings">
+        <span className="material-symbols-outlined text-[12px]">warning</span>
+        Warnings
+      </span>
+    );
+  }
+  return null;
 }
 
 function LibraryContent() {
@@ -78,7 +154,7 @@ function LibraryContent() {
       const { data: resourcesData } = await supabase
         .from("resources")
         .select(
-          "id, user_id, title, original_filename, storage_path, mime_type, size_bytes, char_count, status, error_message, extracted_text, page_count, created_at, updated_at",
+          "id, user_id, title, original_filename, storage_path, mime_type, size_bytes, char_count, status, error_message, extracted_text, page_count, ocr_used, ocr_confidence, processing_metadata, created_at, updated_at",
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -342,19 +418,30 @@ function LibraryContent() {
                                 router.push(`/library?doc=${r.id}`);
                                 setViewMode("workspace");
                               }}
-                              className="font-medium text-on-surface hover:text-primary transition-colors text-left flex flex-col"
+                              className="font-medium text-on-surface hover:text-primary transition-colors text-left flex flex-col items-start gap-1"
                             >
-                              <span className="truncate max-w-sm">
-                                {r.title || r.original_filename}
-                              </span>
-                              <span className="text-[11px] text-outline font-mono">
-                                ID: {r.id.slice(0, 8)}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="flex items-center justify-center w-6 h-6 rounded bg-surface-container">
+                                  {fileTypeIcon(r.mime_type)}
+                                </span>
+                                <span className="truncate max-w-sm">
+                                  {r.title || r.original_filename}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[11px] text-outline font-mono">
+                                <span className="px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30">
+                                  {fileTypeLabel(r.mime_type)}
+                                </span>
+                                <span>ID: {r.id.slice(0, 8)}</span>
+                              </div>
                             </button>
                           </td>
 
                           <td className="py-3.5 pr-4 whitespace-nowrap">
-                            {statusBadge(r.status)}
+                            <div className="flex items-center gap-2">
+                              {statusBadge(r.status)}
+                              {warningsIndicator(r.processing_metadata as Record<string, unknown> | null | undefined)}
+                            </div>
                           </td>
 
                           <td className="py-3.5 pr-4 font-mono text-on-surface-variant">

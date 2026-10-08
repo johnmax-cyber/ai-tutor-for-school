@@ -43,5 +43,11 @@ export function buildMessages(
 }
 
 function escapeXml(text: string): string {
-  return text.replace(/</g, "‹").replace(/>/g, "›");
+  return text
+    .replace(/&/g, "&#38;")
+    .replace(/</g, "&#60;")
+    .replace(/>/g, "&#62;")
+    .replace(/"/g, "&#34;")
+    .replace(/'/g, "&#39;")
+    .replace(/[\u2018\u2019\u201c\u201d\u2013\u2014\u2026\u00ab\u00bb]/g, "");
 }

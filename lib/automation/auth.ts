@@ -81,7 +81,9 @@ export async function verifyResourceOwnership(
 ): Promise<Resource | null> {
   const { data, error } = await supabase
     .from("resources")
-    .select("id, user_id, title, status, storage_path")
+    .select(
+      "id, user_id, title, status, storage_path, mime_type, retry_count, processing_started_at, processing_metadata, updated_at",
+    )
     .eq("id", resourceId)
     .eq("user_id", userId)
     .single();

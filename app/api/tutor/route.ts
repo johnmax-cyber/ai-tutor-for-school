@@ -13,6 +13,8 @@ export const maxDuration = 60;
 const requestSchema = z.object({
   question: z.string().trim().min(1).max(500),
   resourceId: z.string().uuid().optional(),
+  imageResourceId: z.string().uuid().optional(),
+  imagePage: z.number().int().positive().optional(),
   history: z
     .array(
       z.object({
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
     return jsonError("Invalid request.", 400);
   }
 
-  const { question, resourceId, history = [] } = parsed.data;
+  const { question, resourceId, imageResourceId, imagePage, history = [] } = parsed.data;
 
   if (resourceId) {
     const { data: resource, error: resError } = await supabase
@@ -65,13 +67,73 @@ export async function POST(request: Request) {
     }
   }
 
+  // Validate imageResourceId + imagePage if provided
+  let imageBuffer: Uint8Array | null = null;
+  let imageMimeType: string | null = null;
+
+  if (imageResourceId || imagePage) {
+    if (!imageResourceId || !imagePage) {
+      return jsonError("Both imageResourceId and imagePage are required.", 400);
+    }
+
+    // Check ownership of image resource
+    const { data: imgResource, error: imgResError } = await supabase
+      .from("resources")
+      .select("id, mime_type, status")
+      .eq("id", imageResourceId)
+      .eq("user_id", userId)
+      .single();
+
+    if (imgResError || !imgResource) {
+      return jsonError("Image resource not found.", 404);
+    }
+
+    if (imgResource.status !== "ready") {
+      return jsonError("Image resource is not ready.", 409);
+    }
+
+    // Fetch the image from resource_images
+    const { data: imgRow, error: imgRowError } = await supabase
+      .from("resource_images")
+      .select("storage_path, mime_type")
+      .eq("resource_id", imageResourceId)
+      .eq("page_number", imagePage)
+      .limit(1)
+      .single();
+
+    if (imgRowError || !imgRow) {
+      return jsonError("Image not found on that page.", 404);
+    }
+
+    // Download the image
+    const { data: imgData, error: imgDownloadError } = await supabase.storage
+      .from("study-pdfs")
+      .download(imgRow.storage_path);
+
+    if (imgDownloadError || !imgData) {
+      console.error("Tutor vision image download error:", imgDownloadError);
+      return jsonError("Failed to load image.", 500);
+    }
+
+    imageBuffer = new Uint8Array(await imgData.arrayBuffer());
+    imageMimeType = imgRow.mime_type;
+  }
+
   const ai = createAIService();
 
+  // Check if vision is needed but not configured
+  if (imageBuffer && imageMimeType) {
+    const hasVisionConfig = process.env.AI_VISION_MODEL && (process.env.AI_VISION_API_KEY || process.env.AI_API_KEY);
+    if (!hasVisionConfig) {
+      return jsonError("Vision is not configured.", 503);
+    }
+  }
+
   try {
-    const answer = await handleTutorQuestion(
-      { ai, retrieve: retrieveChunks },
-      { question, resourceId, history }
-    );
+       const answer = await handleTutorQuestion(
+       { ai, retrieve: retrieveChunks },
+       { question, resourceId, imageBuffer, imageMimeType, imagePage, history }
+     );
     return NextResponse.json(answer);
   } catch (err) {
     const error = err as AIError;

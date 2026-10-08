@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { processResource } from "../lib/resources/processing";
+import { terminateOcrWorker } from "../lib/documents/ocr";
 
 type Row = Record<string, unknown>;
 
@@ -398,14 +399,144 @@ async function runTests() {
     check("update failure status failed", result.status === "failed");
     check("update failure error", result.error === "Resource update failed.");
     check("update failure chunks were inserted", state.chunks.length > 0);
-    check("update failure resource marked failed", state.resource?.status === "failed");
-  }
+     check("update failure resource marked failed", state.resource?.status === "failed");
+   }
 
-  console.log(`\n${passed} passed, ${failed} failed`);
+   // --- 8. Retry gates: retry_count >= MAX_RETRIES is skipped ---
+   console.log("\n=== Retry gate: retry_count exhausted ===");
+   {
+     const { client, state } = createProcClient({
+       resource: baseResource({ retry_count: 3 }),
+       downloadData: pdfBytes,
+     });
+
+     const result = await processResource(RESOURCE_ID, client);
+
+     check("exhausted retry returns not success", result.success === false);
+     check(
+       "exhausted retry error",
+       result.error === "Retry limit exceeded or processing too recent.",
+     );
+     check("exhausted retry no download/chunks", state.chunks.length === 0);
+     check(
+       "exhausted retry status unchanged",
+       state.resource?.status === "processing",
+     );
+   }
+
+   // --- 9. Retry gate: processing_started_at < 10 minutes is skipped ---
+   console.log("\n=== Retry gate: started too recently ===");
+   {
+     const recent = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+     const { client, state } = createProcClient({
+       resource: baseResource({
+         retry_count: 1,
+         processing_started_at: recent,
+       }),
+       downloadData: pdfBytes,
+     });
+
+     const result = await processResource(RESOURCE_ID, client);
+
+     check("recent start returns not success", result.success === false);
+     check(
+       "recent start error",
+       result.error === "Retry limit exceeded or processing too recent.",
+     );
+     check("recent start no chunks", state.chunks.length === 0);
+   }
+
+   // --- 10. Retry gate: processing_started_at > 10 minutes is retried ---
+   console.log("\n=== Retry gate: started long enough ago (retried) ===");
+   {
+     const old = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+     const { client, state } = createProcClient({
+       resource: baseResource({
+         retry_count: 1,
+         processing_started_at: old,
+       }),
+       downloadData: pdfBytes,
+     });
+
+     const result = await processResource(RESOURCE_ID, client);
+
+     check("old start returns success", result.success === true);
+     check("old start status ready", result.status === "ready");
+     check("old start inserted chunks", state.chunks.length > 0);
+   }
+
+   // --- 11. Permanent failure: unsupported type is classified + never retried ---
+   console.log("\n=== Permanent failure: unsupported type ===");
+   {
+     const { client, state } = createProcClient({
+       resource: baseResource({
+         mime_type: "application/octet-stream",
+         original_filename: "payload.bin",
+       }),
+       downloadData: new Uint8Array(Buffer.from("not an image or pdf")),
+     });
+
+     const result = await processResource(RESOURCE_ID, client);
+
+     check("unsupported type returns not success", result.success === false);
+     check("unsupported type is permanent", result.permanent === true);
+    check(
+      "unsupported type retry_count maxed",
+      (state.resource as Row)?.retry_count === 3,
+    );
+    const pm = (state.resource as Row)?.processing_metadata as
+      | { permanent_failure?: boolean; failure_reason?: string }
+      | undefined;
+    check(
+      "unsupported type marked permanent_failure",
+      pm?.permanent_failure === true,
+    );
+    check(
+      "unsupported type failure_reason",
+      pm?.failure_reason === "unsupported_type",
+    );
+
+    // Re-running must short-circuit via the retry gates.
+    const retry = await processResource(RESOURCE_ID, client);
+    check("permanent failure not reprocessed", retry.success === false);
+    check(
+      "permanent failure still skipped",
+      retry.error === "Retry limit exceeded or processing too recent." ||
+        retry.error === "Permanent failure; not retried.",
+    );
+    check("permanent re-run not retryable", retry.success === false);
+   }
+
+   // --- 12. Permanent failure seeded directly via metadata ---
+   console.log("\n=== Permanent failure: seeded metadata ===");
+   {
+     const { client } = createProcClient({
+       resource: baseResource({
+         processing_metadata: { permanent_failure: true, failure_reason: "corrupt_file" },
+         retry_count: 0,
+       }),
+       downloadData: pdfBytes,
+     });
+
+     const result = await processResource(RESOURCE_ID, client);
+
+     check("seeded permanent returns not success", result.success === false);
+     check("seeded permanent is permanent", result.permanent === true);
+     check(
+       "seeded permanent error",
+       result.error === "Permanent failure; not retried.",
+     );
+   }
+
+   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) process.exitCode = 1;
 }
 
-runTests().catch((err) => {
-  console.error("Test runner error:", err);
-  process.exitCode = 1;
-});
+runTests()
+  .catch((err) => {
+    console.error("Test runner error:", err);
+    process.exitCode = 1;
+  })
+  .finally(() => {
+    void terminateOcrWorker().catch(() => undefined);
+  });

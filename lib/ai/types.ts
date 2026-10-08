@@ -10,8 +10,16 @@ export interface AIResult {
   completionTokens: number;
 }
 
+export interface VisionResult {
+  text: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+}
+
 export interface AIService {
   chat(messages: ChatMessage[]): Promise<AIResult>;
+  vision(text: string, imageBase64: string, mimeType: string): Promise<VisionResult>;
   getCallLog?(): unknown[];
   getCallCount?(): number;
 }

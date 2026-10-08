@@ -33,6 +33,24 @@ export default async function TutorPage({
     ? []
     : ((resources ?? []) as { id: string; title: string }[]);
 
+  // Fetch image resources (images and slides with images)
+  const { data: imageResources } = await supabase
+    .from("resources")
+    .select("id, title, mime_type, page_count")
+    .eq("user_id", user.id)
+    .eq("status", "ready")
+    .in("mime_type", [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ])
+    .order("created_at", { ascending: false });
+
+  const visionConfigured = Boolean(
+    process.env.AI_VISION_MODEL && (process.env.AI_VISION_API_KEY || process.env.AI_API_KEY)
+  );
+
   const activeDoc = readyResources.find((r) => r.id === resourceId);
 
   return (
@@ -99,7 +117,9 @@ export default async function TutorPage({
         ) : (
           <TutorChat
             resources={readyResources}
+            imageResources={imageResources ?? []}
             initialResourceId={resourceId}
+            visionConfigured={visionConfigured}
           />
         )}
       </div>
