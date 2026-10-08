@@ -346,7 +346,7 @@ export default function PracticeSessionPage({
                       {showHint && (
                         <span className="text-xs text-on-surface">
                           {feedback.hint}
-                        )
+                        </span>
                       )}
                     </div>
                   )}

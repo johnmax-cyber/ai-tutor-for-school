@@ -46,8 +46,14 @@
     "test:hybrid-search": "tsx tests/hybrid-search.test.ts",
     "test:usage-analytics": "tsx tests/usage-analytics.test.ts",
     "test:ui-tokens": "tsx tests/ui-tokens.test.ts",
+    "test:secret-scan": "tsx tests/secret-scan.test.ts",
+    "test:prompt-injection": "tsx tests/prompt-injection.test.ts",
+    "test:security-auth": "tsx tests/security-auth.test.ts",
+    "test:security-access-control": "tsx tests/security-access-control.test.ts",
+    "test:security-file-upload": "tsx tests/security-file-upload.test.ts",
+    "test:security-db-policies": "tsx tests/security-db-policies.test.ts",
     "eval": "tsx scripts/eval.ts",
-    "test:all": "npm run test:pdf && npm run test:ocr && npm run test:validation && npm run test:images && npm run test:text && npm run test:processing-types && npm run test:chunking && npm run test:e2e && npm run test:keywords && npm run test:text-quality && npm run test:ai-errors && npm run test:tutor-prompt && npm run test:tutor-service && npm run test:tutor-golden && npm run test:study-mastery && npm run test:study-handoff && npm run test:study-mistakes && npm run test:study-service && npm run test:study-analytics && npm run test:tutor-generate && npm run test:study-e2e && npm run test:missions && npm run test:notifications && npm run test:processing-retry && npm run test:n8n-webhook && npm run test:pptx && npm run test:real-pptx && npm run test:vision && npm run test:processing-images && npm run test:tutor-vision && npm run test:pdf-regression && npm run test:tutor-cross-user && npm run test:retry-vision && npm run test:embeddings && npm run test:embeddings-pipeline && npm run test:hybrid-search"
+    "test:all": "npm run test:pdf && npm run test:ocr && npm run test:validation && npm run test:images && npm run test:text && npm run test:processing-types && npm run test:chunking && npm run test:e2e && npm run test:keywords && npm run test:text-quality && npm run test:ai-errors && npm run test:tutor-prompt && npm run test:tutor-service && npm run test:tutor-golden && npm run test:study-mastery && npm run test:study-handoff && npm run test:study-mistakes && npm run test:study-service && npm run test:study-analytics && npm run test:tutor-generate && npm run test:study-e2e && npm run test:missions && npm run test:notifications && npm run test:processing-retry && npm run test:n8n-webhook && npm run test:pptx && npm run test:real-pptx && npm run test:vision && npm run test:processing-images && npm run test:tutor-vision && npm run test:pdf-regression && npm run test:tutor-cross-user && npm run test:retry-vision && npm run test:embeddings && npm run test:embeddings-pipeline && npm run test:hybrid-search && npm run test:usage-analytics && npm run test:ui-tokens && npm run test:prompt-injection && npm run test:secret-scan && npm run test:security-auth && npm run test:security-access-control && npm run test:security-file-upload && npm run test:security-db-policies"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

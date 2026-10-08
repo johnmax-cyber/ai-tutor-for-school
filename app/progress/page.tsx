@@ -284,6 +284,14 @@ export default function ProgressPage() {
     return topic.mastery_state === "review_needed" || hasMistakes;
   });
 
+  // Weak topics: topics with mastery below threshold and significant mistake patterns
+  const weakTopics = data.topics.filter(topic => {
+    const masteryPct = getMasteryPercentage(topic);
+    const insights = data.topicInsightsMap[topic.id];
+    const hasSignificantMistakes = insights && insights.commonMistakes.some(m => m.occurrenceCount >= 3);
+    return masteryPct < 70 && (hasSignificantMistakes || topic.mastery_state === "developing");
+  });
+
   // Recent improvement: we don't have historical data, so we'll skip for now
   // Instead, we'll show topics that are "strong" or "developing" but have room for improvement
   const improvableTopics = data.topics.filter(topic => 
@@ -570,11 +578,69 @@ export default function ProgressPage() {
               actionText="Continue learning"
               actionLink="/study"
             />
-          )}
-        </section>
+)}
+           )}
+ 
+         {/* Weak Topics */}
+         <section className="mb-8">
+           <h2 className="text-xl font-bold text-on-surface mb-4">
+             Weak Topics
+           </h2>
+           {weakTopics.length > 0 ? (
+             <div className="space-y-3">
+               {weakTopics.map((topic, index) => {
+                 const masteryPct = getMasteryPercentage(topic);
+                 const insights = data.topicInsightsMap[topic.id];
+                 const commonMistakes = insights && insights.commonMistakes ? insights.commonMistakes.filter(m => m.occurrenceCount > 0) : [];
+                 const topMistake = commonMistakes.length > 0 ? commonMistakes[0] : null;
+                 return (
+                   <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
+                     <div className="flex items-start gap-3">
+                       <div className="flex-shrink-0">
+                         <span className="material-symbols-outlined text-[24px] text-warning">
+                           trending_down
+                         </span>
+                       </div>
+                       <div className="flex-1">
+                         <h3 className="text-base font-semibold text-on-surface mb-1">
+                           {topic.name}
+                         </h3>
+                         <p className="text-sm text-on-surface-variant mb-2">
+                           {masteryPct}% mastery
+                         </p>
+                         {topMistake && (
+                           <p className="text-xs text-on-surface-variant">
+                             Common: {topMistake.description}
+                           </p>
+                         )}
+                       </div>
+                     </div>
+                     <div className="w-full bg-surface-container-high rounded-full h-2.5 mb-2">
+                       <div
+                         className="h-full bg-warning rounded-full"
+                         style={{ width: `${masteryPct}%` }}
+                       ></div>
+                     </div>
+                     <div className="text-sm font-medium text-warning">
+                       {masteryPct}% mastery • Needs attention
+                     </div>
+                   </div>
+                 );
+               })}
+             </div>
+           ) : (
+             <EmptyState
+               title="No weak topics"
+               description="Keep up the great work! All topics are progressing well."
+               icon="check_circle"
+               actionText="Continue learning"
+               actionLink="/study"
+             />
+           )}
+         </section>
 
-        {/* Study activity */}
-        <section className="mb-8">
+         {/* Study activity */}
+         <section className="mb-8">
           <h2 className="text-xl font-bold text-on-surface mb-4">
             Recent Study Activity
           </h2>

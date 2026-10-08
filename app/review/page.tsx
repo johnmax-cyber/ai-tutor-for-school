@@ -1,7 +1,138 @@
+import { useState, useEffect } from "react";
 import { StudyShell } from "@/components/study-shell";
 import Link from "next/link";
+import { Button, Card, Skeleton, EmptyState, Alert } from "@/components/ui";
+import { createClient } from "@/lib/supabase/server";
+
+interface Mistake {
+  id: string;
+  topic_id: string;
+  description: string;
+  incorrect_count: number;
+  correct_count: number;
+  hint_count: number;
+  recurring: boolean;
+  last_seen: string;
+  created_at: string;
+}
+
+interface ReviewTopic {
+  id: string;
+  name: string;
+  mastery_state: "not_started" | "learning" | "developing" | "strong" | "review_needed";
+  total_attempts: number;
+  correct_attempts: number;
+  hints_used: number;
+  mistake_count: number;
+  last_studied: string | null;
+}
 
 export default function ReviewPage() {
+  const [mistakes, setMistakes] = useState<Mistake[]>([]);
+  const [reviewTopics, setReviewTopics] = useState<ReviewTopic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const supabase = await createClient();
+
+  useEffect(() => {
+    async function loadReviewData() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Fetch mistakes
+        const { data: mistakesData, errors } = await supabase
+          .from("mistakes")
+          .select("*")
+          .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+          .order("last_seen", { ascending: false });
+
+        if (errors) throw errors;
+        setMistakes(mistakesData || []);
+
+        // Fetch topics with mistake counts
+        const topicIds = [...new Set(mistakesData?.map((m: any) => m.topic_id) || [])];
+        const { data: topicsData, errors: topicsErrors } = await supabase
+          .from("topics")
+          .select("*")
+          .in("id", topicIds);
+
+        if (topicsErrors) throw topicsErrors;
+
+        const mistakeCounts: Record<string, number> = {};
+        mistakesData?.forEach((m: any) => {
+          mistakeCounts[m.topic_id] = (mistakeCounts[m.topic_id] || 0) + m.incorrect_count;
+        });
+
+        setReviewTopics(
+          (topicsData || []).map((topic: any) => ({
+            id: topic.id,
+            name: topic.name,
+            mastery_state: topic.mastery_state,
+            total_attempts: topic.total_attempts,
+            correct_attempts: topic.correct_attempts,
+            hints_used: topic.hints_used,
+            mistake_count: mistakeCounts[topic.id] || 0,
+            last_studied: topic.last_studied,
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to load review data:", err);
+        setError("Failed to load review data. Please try again.");
+      }
+      setLoading(false);
+    }
+
+    loadReviewData();
+  }, [supabase]);
+
+  if (loading) {
+    return (
+      <StudyShell
+        breadcrumbs={[
+          { label: "Mistakes / Review", href: "/review" },
+        ]}
+      >
+        <div className="max-w-2xl mx-auto space-y-8">
+          <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
+            <span className="material-symbols-outlined text-[36px] text-primary animate-spin">
+              build
+            </span>
+            <p className="text-sm text-outline font-mono">Loading your review data...</p>
+          </div>
+        </div>
+      </StudyShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <StudyShell
+        breadcrumbs={[
+          { label: "Mistakes / Review", href: "/review" },
+        ]}
+      >
+        <div className="max-w-2xl mx-auto p-6">
+          <div className="bg-error-container/20 border border-error-crimson/30 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <span className="material-symbols-outlined text-[48px] text-error-crimson">
+                error
+              </span>
+              <div>
+                <h2 className="text-xl font-bold text-error-crimson">Could not load review data</h2>
+                <p className="text-sm text-on-surface-variant">{error}</p>
+                <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="mt-3">
+                  Retry
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </StudyShell>
+    );
+  }
+
   return (
     <StudyShell
       breadcrumbs={[
@@ -9,44 +140,90 @@ export default function ReviewPage() {
       ]}
     >
       <div className="max-w-2xl mx-auto space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 py-8 px-4 bg-surface-container-low rounded-xl border border-surface-container-high shadow-sm">
-          <div>
-            <span className="material-symbols-outlined text-primary text-[48px]">
-              build
-            </span>
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-on-surface flex items-center gap-3">
-              <span className="material-symbols-outlined text-[28px]">psychology_alt</span>
-              <span>Mistakes &amp; Review</span>
-            </h1>
-            <p className="text-sm text-on-surface-variant mt-2">
-              Review your mistakes, strengthen weak areas, and optimize your study sessions
-              with targeted practice based on your learning patterns.
-            </p>
-          </div>
-        </div>
+        <div className="grid gap-6">
+          {/* Mistakes Summary */}
+          <Card padding="md" className="border border-surface-container-high">
+            <h3 className="text-base font-semibold text-on-surface mb-4">
+              <span className="material-symbols-outlined text-primary text-[24px]">
+                error
+              </span>
+              Mistakes Summary
+            </h3>
+            {mistakes.length === 0 ? (
+              <p className="text-on-surface-variant">
+                No mistakes recorded yet. Keep practicing to build your mistake log!
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {mistakes.slice(0, 5).map((mistake: any) => (
+                  <div key={mistake.id} className="p-3 bg-surface-container-low rounded-lg border border-surface-container-high">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <span className="material-symbols-outlined text-[16px]">
+                          error
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-on-surface">
+                          {mistake.description || "Unknown mistake"}
+                        </h4>
+                        <p className="text-xs text-on-surface-variant">
+                          {mistake.incorrect_count} incorrect • {mistake.correct_count} correct
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
 
-        <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container-high">
-          <h2 className="text-lg font-semibold text-on-surface mb-4 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[20px]">
-              info
-            </span>
-            <span>Coming Soon</span>
-          </div>
-          <p className="text-on-surface-variant">
-            The Review system will help you identify patterns in your mistakes, track which
-            concepts need more attention, and create personalized review sessions to
-            maximize retention and understanding.
-          </p>
-          <div className="mt-6 flex items-center gap-3">
-            <Link
-              href="/study"
-              className="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Start Reviewing Now
-            </Link>
-          </div>
+          {/* Topics Needing Review */}
+          {reviewTopics.length > 0 ? (
+            <Card padding="md" className="border border-surface-container-high">
+              <h3 className="text-base font-semibold text-on-surface mb-4">
+                <span className="material-symbols-outlined text-primary text-[24px]">
+                  repeat
+                </span>
+                Topics Needing Review
+              </h3>
+              <div className="space-y-3">
+                {reviewTopics
+                  .filter((t) => t.mistake_count > 0 || t.mastery_state === "review_needed")
+                  .slice(0, 5)
+                  .map((topic: ReviewTopic) => (
+                    <div key={topic.id} className="p-3 bg-surface-container-low rounded-lg border border-surface-container-high">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          <span className="material-symbols-outlined text-[16px]">
+                            repeat
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-on-surface">
+                            {topic.name}
+                          </h4>
+                          <p className="text-xs text-on-surface-variant">
+                            Mistakes: {topic.mistake_count}
+                          </p>
+                          {topic.mastery_state === "review_needed" && (
+                            <span className="text-xs text-error-crimson">Review needed</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </Card>
+          ) : (
+            <EmptyState
+              title="No topics need review"
+              description="Great job! All topics are strong. Keep up the learning."
+              icon="check_circle"
+              actionText="Continue learning"
+              actionLink="/study"
+            />
+          )}
         </div>
       </div>
     </StudyShell>

@@ -592,8 +592,7 @@ export default async function HomePage() {
                           </Link>
                         </div>
                       </div>
-                    </>
-                  ))}
+                    ))}
                 </div>
               ) : (
                 <EmptyState
@@ -703,6 +702,7 @@ export default async function HomePage() {
             </section>
           </>
         )}
+      </div>
 
         {isNewUser && (
           <div className="max-w-2xl mx-auto p-6">
@@ -719,6 +719,7 @@ export default async function HomePage() {
     </StudyShell>
   );
 }
+// Helper functions
 
 // Helper functions
 function getTimeOfGreeting(): string {

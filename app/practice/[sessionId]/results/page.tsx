@@ -68,7 +68,7 @@ interface StudyTip {
   category: "accuracy" | "hints" | "mistakes" | "progress";
 }
 
-interface PerformanceTrend = "improving" | "stable" | "declining" | "insufficient_data";
+type PerformanceTrend = "improving" | "stable" | "declining" | "insufficient_data";
 
 export default function PracticeResultsPage({
   searchParams,
