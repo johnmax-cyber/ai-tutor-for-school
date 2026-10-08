@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -38,11 +38,16 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-export function UploadForm() {
+export function UploadForm({ embeddingsEnabled = false }: { embeddingsEnabled?: boolean }) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showEmbeddingNotice, setShowEmbeddingNotice] = useState(embeddingsEnabled);
+
+  useEffect(() => {
+    setShowEmbeddingNotice(embeddingsEnabled);
+  }, [embeddingsEnabled]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -133,6 +138,15 @@ export function UploadForm() {
         </span>
         Images and slides may be sent to an external AI provider when vision is enabled for diagram understanding and image Q&A.
       </div>
+
+      {showEmbeddingNotice && (
+        <div className="p-2 rounded-lg bg-tertiary/5 border border-tertiary/20 text-xs text-on-surface-variant text-center">
+          <span className="material-symbols-outlined align-middle text-[14px] me-1">
+            info
+          </span>
+          Embeddings are enabled. Chunk text is sent to an external provider for semantic search.
+        </div>
+      )}
 
       {error && (
         <div className="p-3 rounded-lg bg-error-container/20 border border-error/30 text-error-crimson text-sm flex items-center gap-2">

@@ -41,7 +41,13 @@
     "test:pdf-regression": "tsx tests/pdf-regression.test.ts",
     "test:tutor-cross-user": "tsx tests/tutor-cross-user.test.ts",
     "test:retry-vision": "tsx tests/retry-vision.test.ts",
-    "test:all": "npm run test:pdf && npm run test:ocr && npm run test:validation && npm run test:images && npm run test:text && npm run test:processing-types && npm run test:chunking && npm run test:e2e && npm run test:keywords && npm run test:text-quality && npm run test:ai-errors && npm run test:tutor-prompt && npm run test:tutor-service && npm run test:tutor-golden && npm run test:study-mastery && npm run test:study-handoff && npm run test:study-mistakes && npm run test:study-service && npm run test:study-analytics && npm run test:tutor-generate && npm run test:study-e2e && npm run test:missions && npm run test:notifications && npm run test:processing-retry && npm run test:n8n-webhook && npm run test:pptx && npm run test:real-pptx && npm run test:vision && npm run test:processing-images && npm run test:tutor-vision && npm run test:pdf-regression && npm run test:tutor-cross-user && npm run test:retry-vision"
+    "test:embeddings": "tsx tests/embeddings.test.ts",
+    "test:embeddings-pipeline": "tsx tests/embeddings-pipeline.test.ts",
+    "test:hybrid-search": "tsx tests/hybrid-search.test.ts",
+    "test:usage-analytics": "tsx tests/usage-analytics.test.ts",
+    "test:ui-tokens": "tsx tests/ui-tokens.test.ts",
+    "eval": "tsx scripts/eval.ts",
+    "test:all": "npm run test:pdf && npm run test:ocr && npm run test:validation && npm run test:images && npm run test:text && npm run test:processing-types && npm run test:chunking && npm run test:e2e && npm run test:keywords && npm run test:text-quality && npm run test:ai-errors && npm run test:tutor-prompt && npm run test:tutor-service && npm run test:tutor-golden && npm run test:study-mastery && npm run test:study-handoff && npm run test:study-mistakes && npm run test:study-service && npm run test:study-analytics && npm run test:tutor-generate && npm run test:study-e2e && npm run test:missions && npm run test:notifications && npm run test:processing-retry && npm run test:n8n-webhook && npm run test:pptx && npm run test:real-pptx && npm run test:vision && npm run test:processing-images && npm run test:tutor-vision && npm run test:pdf-regression && npm run test:tutor-cross-user && npm run test:retry-vision && npm run test:embeddings && npm run test:embeddings-pipeline && npm run test:hybrid-search"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

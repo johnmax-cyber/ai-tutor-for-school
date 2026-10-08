@@ -1,4 +1,5 @@
 import type { PageChunk } from "@/lib/documents/chunking";
+import { computeContentHash } from "@/lib/documents/chunking";
 
 export type ResourceStatus = "uploaded" | "processing" | "ready" | "failed";
 
@@ -62,6 +63,7 @@ export function toChunkInsert(chunk: PageChunk, resourceId: string, userId: stri
     char_end: chunk.char_end,
     content: chunk.content,
     token_count: chunk.token_count,
+    content_hash: computeContentHash(chunk.content),
   };
 }
 

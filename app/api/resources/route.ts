@@ -5,6 +5,7 @@ import { PPTX_MIME_TYPE } from "@/lib/documents/types";
 import { buildStoragePath } from "@/lib/supabase/storage";
 import type { Resource } from "@/lib/resources/types";
 import { processResource } from "@/lib/resources/processing";
+import { embedPendingChunks } from "@/lib/resources/embeddings";
 
 export const runtime = "nodejs";
 
@@ -160,6 +161,9 @@ export async function POST(request: Request) {
   const result = await processResource(resourceId, supabase);
 
   if (result.success) {
+    embedPendingChunks(userId, resourceId).catch((err) => {
+      console.error(`post-upload embedding kick error [${resourceId}]:`, err);
+    });
     return NextResponse.json({ resource: result.resource as Resource });
   }
 

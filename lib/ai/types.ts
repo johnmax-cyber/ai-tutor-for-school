@@ -17,9 +17,16 @@ export interface VisionResult {
   completionTokens: number;
 }
 
+export interface EmbeddingResult {
+  vectors: number[][];
+  model: string;
+  promptTokens: number;
+}
+
 export interface AIService {
   chat(messages: ChatMessage[]): Promise<AIResult>;
   vision(text: string, imageBase64: string, mimeType: string): Promise<VisionResult>;
+  embeddings?(inputs: string[]): Promise<EmbeddingResult>;
   getCallLog?(): unknown[];
   getCallCount?(): number;
 }

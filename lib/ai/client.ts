@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { AIError, AIResult, AIService, ChatMessage, VisionResult } from "./types";
+import { AIError, AIResult, AIService, ChatMessage, EmbeddingResult, VisionResult } from "./types";
 
 export function mapProviderError(err: unknown): AIError {
   if (err instanceof OpenAI.APIError) {
@@ -132,6 +132,60 @@ export function createAIService(): AIService {
           completionTokens,
         };
       } catch (err) {
+        throw mapProviderError(err);
+      }
+    },
+
+    async embeddings(inputs: string[]): Promise<EmbeddingResult> {
+      const model = process.env.AI_EMBEDDING_MODEL;
+      if (!model) {
+        throw new AIError("config", "AI_EMBEDDING_MODEL not configured");
+      }
+
+      const apiKey = process.env.AI_EMBEDDING_API_KEY ?? process.env.AI_API_KEY;
+      if (!apiKey) {
+        throw new AIError("config", "AI_EMBEDDING_API_KEY or AI_API_KEY not configured");
+      }
+
+      const baseURL = process.env.AI_EMBEDDING_BASE_URL ?? process.env.AI_BASE_URL;
+      if (!baseURL) {
+        throw new AIError("config", "AI_EMBEDDING_BASE_URL or AI_BASE_URL not configured");
+      }
+
+      const client = new OpenAI({
+        apiKey,
+        baseURL,
+        maxRetries: 1,
+        timeout: 30000,
+      });
+
+      const start = Date.now();
+
+      try {
+        const response = await client.embeddings.create({
+          model,
+          input: inputs,
+          encoding_format: "float",
+        });
+
+        const latency = Date.now() - start;
+        const vectors = response.data.map((d) => d.embedding);
+        const promptTokens = response.usage?.prompt_tokens ?? 0;
+
+        console.log(`embedding call: model=${model} chunks=${inputs.length} tokens=${promptTokens} latency=${latency}ms`);
+
+        return {
+          vectors,
+          model: response.model,
+          promptTokens,
+        };
+      } catch (err) {
+        if (err instanceof OpenAI.APIError && err.status === 400) {
+          const message = err.message.toLowerCase();
+          if (message.includes("too long") || message.includes("maximum context length")) {
+            throw new AIError("bad_request", `Embedding input too long: ${err.message}`);
+          }
+        }
         throw mapProviderError(err);
       }
     },

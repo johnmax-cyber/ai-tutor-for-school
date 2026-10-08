@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 export const CHUNK_SIZE = 500;
 export const CHUNK_OVERLAP = 50;
 
@@ -193,4 +195,8 @@ export function verifyDocumentCoverage(
   }
 
   return reports;
+}
+
+export function computeContentHash(content: string): string {
+  return createHash("sha256").update(content).digest("hex");
 }

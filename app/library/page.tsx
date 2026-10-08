@@ -137,6 +137,22 @@ function LibraryContent() {
     null,
   );
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
+  const [embeddingsEnabled, setEmbeddingsEnabled] = useState(false);
+
+  useEffect(() => {
+    async function loadEmbeddingStatus() {
+      try {
+        const res = await fetch("/api/embedding-status");
+        if (res.ok) {
+          const data = await res.json();
+          setEmbeddingsEnabled(data.enabled === true);
+        }
+      } catch {
+        // non-blocking
+      }
+    }
+    loadEmbeddingStatus();
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -345,7 +361,7 @@ function LibraryContent() {
               materials will automatically trigger OCR pipeline with confidence
               scoring.
             </p>
-            <UploadForm />
+            <UploadForm embeddingsEnabled={embeddingsEnabled} />
           </div>
 
           {/* Documents Table */}
