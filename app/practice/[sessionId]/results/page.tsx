@@ -4,16 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StudyShell } from "@/components/study-shell";
-import { 
-  Button, 
-  IconButton, 
-  Icon, 
-  Card, 
-  Skeleton, 
-  EmptyState, 
-  ErrorState,
-  ProgressBar,
-  Badge
+import {
+  Button,
 } from "@/components/ui";
 
 interface PracticeSessionData {
@@ -77,10 +69,10 @@ export default function PracticeResultsPage({
 }) {
   const [sessionData, setSessionData] = useState<PracticeSessionData | null>(null);
   const [topicData, setTopicData] = useState<Topic | null>(null);
-  const [topicInsights, setTopicInsights] = useState<TopicInsights | null>(null);
+  const [_topicInsights, setTopicInsights] = useState<TopicInsights | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const _router = useRouter();
 
   useEffect(() => {
     async function loadResults() {
@@ -100,8 +92,8 @@ export default function PracticeResultsPage({
           const topicRes = await fetch(`/api/topics`);
           if (topicRes.ok) {
             const topicJson = await topicRes.json();
-            const topics = topicJson.topics || [];
-            const topic = topics.find(t => t.id === sessionData.topic_name); // Wait, topic_name is a string, not an id. We made a mistake.
+            const topics: Topic[] = topicJson.topics || [];
+            const _topic = topics.find(t => t.id === sessionData.topic_name); // Wait, topic_name is a string, not an id. We made a mistake.
             // Actually, in the session data, we have topic_name as a string, but we need the topic id to fetch the topic from the topics API.
             // We don't have the topic id in the session data. We only have the topic_name string.
             // We will need to change the session data to include the topic id, or we will have to search by name.
@@ -130,7 +122,7 @@ export default function PracticeResultsPage({
     }
 
     loadResults();
-  }, [searchParams]);
+  }, [searchParams, sessionData]);
 
   if (loading) {
     return (
@@ -278,7 +270,7 @@ export default function PracticeResultsPage({
             <span>Practice Complete</span>
           </h1>
           <p className="text-sm text-on-surface-variant mt-1">
-            You've finished your practice session. Here's how you did:
+            You&apos;ve finished your practice session. Here&apos;s how you did:
           </p>
         </div>
 
@@ -305,8 +297,8 @@ export default function PracticeResultsPage({
           </div>
         </div>
 
-        {/* Topic Performance */}
-        {topicData && (
+{/* Topic Performance */}
+        {topicData ? (
           <div className="mb-6">
             <div className="p-6 bg-surface-container-low rounded-lg border border-surface-container-high">
               <h2 className="text-lg font-semibold text-on-surface mb-3">
@@ -342,7 +334,7 @@ export default function PracticeResultsPage({
                   <div className="text-sm font-medium text-primary mt-1">
                     {getMasteryPercentage(topicData)}% mastery
                   </div>
-                  {topicData.nextReviewAt && (
+                  {topicData.next_review_at && (
                     <div className="text-xs text-on-surface-variant mt-2">
                       Next review: {new Date(topicData.next_review_at).toLocaleDateString()}
                     </div>
@@ -350,8 +342,8 @@ export default function PracticeResultsPage({
                 </div>
               </div>
             </div>
-          )
-        )}
+          </div>
+        ) : null}
 
         {/* Mistakes */}
         {/* We don't have detailed mistake data, so we'll show the number of incorrect attempts as a proxy for mistakes. */}
@@ -382,7 +374,7 @@ export default function PracticeResultsPage({
                     <p className="text-sm text-on-surface-variant">
                       Review these concepts to improve your understanding.
                     </p>
-                    <Link
+<Link
                       href={`/study/new?topicId=${topicData?.id}`}
                       className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-sm hover:opacity-90 transition-opacity"
                     >
@@ -395,13 +387,13 @@ export default function PracticeResultsPage({
                     No incorrect attempts! Great job.
                   </p>
                 )}
-              </div>
             </div>
           ) : (
             <p className="text-sm text-on-surface-variant">
               No attempts recorded.
             </p>
           )}
+          </div>
         </div>
 
         {/* What Improved */}
@@ -410,7 +402,7 @@ export default function PracticeResultsPage({
         <div className="mb-6">
           <div className="p-6 bg-surface-container-low rounded-lg border border-surface-container-high">
             <h2 className="text-lg font-semibold text-on-surface mb-3">
-              What's next?
+              What&apos;s next?
             </h2>
             <p className="text-sm text-on-surface-variant">
               {recommendedAction?.description}

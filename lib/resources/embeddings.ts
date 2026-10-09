@@ -183,7 +183,7 @@ export async function embedPendingChunks(
     for (const resourceId of resourceChunkCounts.keys()) {
       const count = resourceChunkCounts.get(resourceId) ?? 0;
       if (count > MAX_EMBEDDABLE_CHUNKS_PER_RESOURCE) {
-        const excess = count - MAX_EMBEDDABLE_CHUNKS_PER_RESOURCE;
+        const _excess = count - MAX_EMBEDDABLE_CHUNKS_PER_RESOURCE;
         const excessRows = batch
           .filter((r) => r.resource_id === resourceId)
           .slice(MAX_EMBEDDABLE_CHUNKS_PER_RESOURCE);
@@ -200,7 +200,6 @@ export async function embedPendingChunks(
 
     const eligible = batch.filter((row) => {
       if (row.embedding_skipped) return false;
-      const hash = row.content_hash ?? computeContentHash(row.content);
       const needsEmbed = row.embedding == null || row.embedding_model !== config.model || row.embedding_dim !== config.dimensions;
       return needsEmbed;
     });
@@ -217,7 +216,7 @@ export async function embedPendingChunks(
 
       for (let i = 0; i < eligible.length; i++) {
         const row = eligible[i];
-        const hash = row.content_hash ?? computeContentHash(row.content);
+      const _hash = row.content_hash ?? computeContentHash(row.content);
 
         const { error: updateError } = await supabase
           .from("resource_chunks")
@@ -226,7 +225,7 @@ export async function embedPendingChunks(
             embedding_model: result.model,
             embedding_dim: config.dimensions,
             embedding_created_at: new Date().toISOString(),
-            content_hash: hash,
+            content_hash: _hash,
           })
           .eq("id", row.id);
 

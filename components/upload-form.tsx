@@ -97,7 +97,7 @@ export function UploadForm({ embeddingsEnabled = false }: { embeddingsEnabled?: 
         return `${limits.label} • ${formatSize(file.size)} / ${limits.maxMB} MB max`;
       })()
     : Object.entries(ACCEPTED_TYPES)
-        .map(([mime, info]) => `${info.label} (${info.maxMB} MB)`)
+        .map(([_mime, info]) => `${info.label} (${info.maxMB} MB)`)
         .join(", ");
 
   const acceptAttr = Object.keys(ACCEPTED_TYPES).join(",");

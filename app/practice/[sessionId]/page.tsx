@@ -4,16 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { StudyShell } from "@/components/study-shell";
-import { 
-  Button, 
-  IconButton, 
-  Icon, 
-  Card, 
-  Skeleton, 
-  EmptyState, 
-  ErrorState,
+import {
+  Button,
+  Card,
   ProgressBar,
-  Badge
 } from "@/components/ui";
 
 interface PracticeSessionData {
@@ -62,7 +56,7 @@ export default function PracticeSessionPage({
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [targetQuestionCount, setTargetQuestionCount] = useState(5);
-  const [mode, setMode] = useState<PracticeConfig["mode"]>("practice");
+  const [_mode, setMode] = useState<PracticeConfig["mode"]>("practice");
   const [answer, setAnswer] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +70,7 @@ export default function PracticeSessionPage({
   const [showHint, setShowHint] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
+  const _pathname = usePathname();
   const sessionIdRef = useRef<string>("");
 
   useEffect(() => {
@@ -84,7 +78,7 @@ export default function PracticeSessionPage({
       try {
         const { sessionId, questionCount, mode } = await searchParams;
         sessionIdRef.current = sessionId;
-        setTargetQuestionCount(parseInt(questionCount) || 5);
+        setTargetQuestionCount(parseInt(questionCount ?? "5") || 5);
         setMode(mode as PracticeConfig["mode"] || "practice");
 
         // Fetch session details
@@ -143,7 +137,7 @@ export default function PracticeSessionPage({
     if (sessionIdRef.current) {
       // Poll for session updates? Not needed for now.
     }
-  }, [sessionIdRef.current]);
+  }, []);
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,7 +205,7 @@ export default function PracticeSessionPage({
 
       if (!res.ok) throw new Error("Failed to end practice session");
 
-      const result = await res.json();
+      const _result = await res.json();
       // Redirect to results page
       router.push(`/practice/${sessionIdRef.current}/results`);
     } catch (error) {
@@ -222,7 +216,7 @@ export default function PracticeSessionPage({
   };
 
   const isLastQuestion = questionIndex >= targetQuestionCount - 1;
-  const hasNextQuestion = !!currentQuestion && !!feedback && feedback.nextQuestion !== null;
+  const _hasNextQuestion = !!currentQuestion;
 
   if (isLoading && !sessionData) {
     return (
@@ -316,7 +310,6 @@ export default function PracticeSessionPage({
               </span>
               <ProgressBar
                 value={((questionIndex + 1) / targetQuestionCount) * 100}
-                showLabel={false}
                 className="h-2.5"
               />
             </div>
@@ -446,4 +439,20 @@ export default function PracticeSessionPage({
       </div>
     </StudyShell>
   );
+}
+
+function getIconForSubject(subject: string | null): string {
+  if (!subject) return "school";
+  const subjectLower = subject.toLowerCase();
+  if (subjectLower.includes("math") || subjectLower.includes("algebra") || subjectLower.includes("geometry"))
+    return "functions";
+  if (subjectLower.includes("science") || subjectLower.includes("biology") || subjectLower.includes("chemistry") || subjectLower.includes("physics"))
+    return "science";
+  if (subjectLower.includes("history") || subjectLower.includes("geography"))
+    return "history";
+  if (subjectLower.includes("literature") || subjectLower.includes("english") || subjectLower.includes("writing"))
+    return "book";
+  if (subjectLower.includes("language") || subjectLower.includes("spanish") || subjectLower.includes("french") || subjectLower.includes("german"))
+    return "translate";
+  return "school";
 }

@@ -1,5 +1,4 @@
 import PizZip from "pizzip";
-import { Buffer } from "node:buffer";
 import { extractPptxText } from "../lib/documents/pptx";
 import { validatePptx } from "../lib/resources/validation";
 import { extractResource } from "../lib/documents/extract";
@@ -24,7 +23,7 @@ function createMockSupabase() {
 
   return {
     storage: {
-      from: (bucket: string) => ({
+      from: (_bucket: string) => ({
         upload: async (path: string, data: Uint8Array) => {
           uploadedImages.push({ path, data });
           return { error: null, data: { path } };

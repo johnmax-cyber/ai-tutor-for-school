@@ -3,7 +3,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StudyShell } from "@/components/study-shell";
 import { TutorChat } from "@/components/tutor-chat";
-import { useState, useEffect } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -221,13 +220,13 @@ export default async function TutorPage({
                         </p>
                       </div>
                     </div>
-                    <div class="flex items-start gap-3">
-                      <div class="flex-shrink-0">
-                        <span class="material-symbols-outlined text-[24px] text-secondary">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <span className="material-symbols-outlined text-[24px] text-secondary">
                           emoji_events
                         </span>
                       </div>
-                      <div class="flex-1">
+                      <div className="flex-1">
                         <h3 className="text-base font-semibold text-on-surface mb-1">
                           Mastery
                         </h3>
@@ -236,14 +235,14 @@ export default async function TutorPage({
                         </p>
                       </div>
                     </div>
-                    <div class="flex items-start gap-3">
-                      <div class="flex-shrink-0">
-                        <span class="material-symbols-outlined text-[24px] text-secondary">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <span className="material-symbols-outlined text-[24px] text-secondary">
                           psychology
                         </span>
                       </div>
-                      <div class="flex-1">
-                        <h3 class="text-base font-semibold text-on-surface mb-1">
+                      <div className="flex-1">
+                        <h3 className="text-base font-semibold text-on-surface mb-1">
                           Mode
                         </h3>
                         {/* Mode selector - placeholder */}
@@ -272,12 +271,12 @@ export default async function TutorPage({
                 <div className="border border-surface-container-high rounded-lg p-4">
                   <div className="space-y-2">
                     <div className="flex items-start gap-3">
-                      <div class="flex-shrink-0">
-                        <span class="material-symbols-outiled text-[24px] text-primary">
+                      <div className="flex-shrink-0">
+                        <span className="material-symbols-outiled text-[24px] text-primary">
                           lightbulb
                         </span>
                       </div>
-                      <div class="flex-1">
+                      <div className="flex-1">
                         <h3 className="text-base font-semibold text-on-surface mb-1">
                           Suggested Actions
                         </h3>

@@ -1,17 +1,10 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { StudyShell } from "@/components/study-shell";
-import { 
-  Button, 
-  IconButton, 
-  Icon, 
-  Card, 
-  Skeleton, 
-  EmptyState, 
-  ErrorState,
-  ProgressBar,
-  Badge
-} from "@/components/ui";
+import { Button, EmptyState } from "@/components/ui";
+
 
 interface Topic {
   id: string;
@@ -52,7 +45,7 @@ interface StudyTip {
   category: "accuracy" | "hints" | "mistakes" | "progress";
 }
 
-interface PerformanceTrend = "improving" | "stable" | "declining" | "insufficient_data";
+type PerformanceTrend = "improving" | "stable" | "declining" | "insufficient_data";
 
 interface StudySession {
   id: string;
@@ -94,7 +87,7 @@ export default function ProgressPage() {
         let topics: Topic[] = [];
         if (topicsRes.ok) {
           const topicsData = await topicsRes.json();
-          topics = (topicsData.topics || []).map((topic: any) => ({
+          topics = (topicsData.topics || []).map((topic: Topic) => ({
             id: topic.id,
             name: topic.name,
             description: topic.description,
@@ -116,7 +109,7 @@ export default function ProgressPage() {
         let sessions: StudySession[] = [];
         if (sessionsRes.ok) {
           const sessionsData = await sessionsRes.json();
-          sessions = (sessionsData.sessions || []).map((session: any) => ({
+          sessions = (sessionsData.sessions || []).map((session: StudySession) => ({
             id: session.id,
             topic_name: session.topic_name,
             subject_name: session.subject_name,
@@ -240,13 +233,13 @@ export default function ProgressPage() {
     }
   };
 
-  const getTopicColor = (topic: Topic): string => {
+  const _getTopicColor = (topic: Topic): string => {
     // Simple hash function to generate a consistent color for each topic
     let hash = 0;
     for (let i = 0; i < topic.name.length; i++) {
       hash = topic.name.charCodeAt(i) + ((hash << 5) - hash);
     }
-    let c = hash & 0x00FFFFFF;
+    const c = hash & 0x00FFFFFF;
     return `#${c.toString(16).padStart(6, "0")}`;
   };
 
@@ -303,7 +296,7 @@ export default function ProgressPage() {
   // Study activity: recent sessions (last 5)
   const recentSessions = data.sessions.slice(0, 5).map(session => ({
     ...session,
-    formattedDate: new Date(session.started_at).toLocaleDateString(undefined, { month: 'short', day: 'year', hour: '2-digit', minute: '2-digit' }),
+    formattedDate: new Date(session.started_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
     accuracy: session.total_attempts > 0 ? Math.round((session.correct_attempts / session.total_attempts) * 100) : 0,
   }));
 
@@ -434,8 +427,7 @@ export default function ProgressPage() {
               title="No subjects yet"
               description="Create topics and assign them to subjects to see subject mastery."
               icon="category"
-              actionText="Create topic"
-              actionLink="/topics"
+              action={<Link href="/topics" className="text-primary hover:underline">Create topic</Link>}
             />
           )}
         </section>
@@ -487,7 +479,7 @@ export default function ProgressPage() {
                       <div className="text-sm font-medium text-primary">
                         {getMasteryPercentage(topic)}% mastery
                       </div>
-                      {topic.nextReviewAt && (
+                      {topic.next_review_at && (
                         <div className="text-xs text-on-surface-variant mt-2">
                           Next review: {new Date(topic.next_review_at).toLocaleDateString()}
                         </div>
@@ -509,139 +501,72 @@ export default function ProgressPage() {
               title="No concepts yet"
               description="Create your first topic to start tracking concept mastery."
               icon="psychology_alt"
-              actionText="Create topic"
-              actionLink="/topics"
+              action={<Link href="/topics" className="text-primary hover:underline">Create topic</Link>}
             />
           )}
         </section>
 
-        {/* Needs review */}
+        {/* Weak Topics */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-on-surface mb-4">
-            Needs Review
+            Weak Topics
           </h2>
-          {needsReviewTopics.length > 0 ? (
+          {weakTopics.length > 0 ? (
             <div className="space-y-3">
-              {needsReviewTopics.map((topic, index) => (
-                <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0">
-                      <span className="material-symbols-outlined text-[24px] text-primary">
-                        repeat
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-base font-semibold text-on-surface mb-1">
-                        Needs review
-                      </h3>
-                      <p className="text-sm text-on-surface-variant mb-2">
-                        {topic.name}
-                      </p>
-                      const insights = data.topicInsightsMap[topic.id];
-                      const mistakes = insights && insights.commonMistakes.filter(m => m.occurrenceCount > 0);
-                      if (mistakes && mistakes.length > 0) {
-                        const mistake = mistakes[0];
-                        <p className="text-xs text-on-surface-variant">
-                          {mistake.occurrenceCount} recent mistakes • Last seen: {new Date(mistake.lastSeen).toLocaleDateString()}
+              {weakTopics.map((topic, index) => {
+                const masteryPct = getMasteryPercentage(topic);
+                const insights = data.topicInsightsMap[topic.id];
+                const commonMistakes = insights && insights.commonMistakes ? insights.commonMistakes.filter(m => m.occurrenceCount > 0) : [];
+                const topMistake = commonMistakes.length > 0 ? commonMistakes[0] : null;
+                return (
+                  <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <span className="material-symbols-outlined text-[24px] text-warning">
+                          trending_down
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-base font-semibold text-on-surface mb-1">
+                          {topic.name}
+                        </h3>
+                        <p className="text-sm text-on-surface-variant mb-2">
+                          {masteryPct}% mastery
                         </p>
-                      } else {
-                        <p className="text-xs text-on-surface-variant">
-                          Marked for review
-                        </p>
-                      }
+                        {topMistake && (
+                          <p className="text-xs text-on-surface-variant">
+                            Common: {topMistake.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="w-full bg-surface-container-high rounded-full h-2.5 mb-2">
+                      <div
+                        className="h-full bg-warning rounded-full"
+                        style={{ width: `${masteryPct}%` }}
+                      >
+                      </div>
+                    </div>
+                    <div className="text-sm font-medium text-warning">
+                      {masteryPct}% mastery • Needs attention
                     </div>
                   </div>
-                  <div className="w-full bg-surface-container-high rounded-full h-2.5">
-                    <div
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${getMasteryPercentage(topic)}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-sm font-medium text-primary">
-                    {getMasteryPercentage(topic)}% mastery
-                  </div>
-                  <Link
-                    href={`/study/new?topicId=${topic.id}`}
-                    className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-sm hover:opacity-90 transition-opacity"
-                  >
-                    Start review
-                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  </Link>
-                </div>
-              ))}
+                );
+              })} 
             </div>
           ) : (
             <EmptyState
-              title="All topics are strong"
-              description="Great job! No topics need review right now. Keep up the learning."
+              title="No weak topics"
+              description="Keep up the great work! All topics are progressing well."
               icon="check_circle"
-              actionText="Continue learning"
-              actionLink="/study"
+              action={<Link href="/study" className="text-primary hover:underline">Continue learning</Link>}
             />
-)}
-           )}
- 
-         {/* Weak Topics */}
-         <section className="mb-8">
-           <h2 className="text-xl font-bold text-on-surface mb-4">
-             Weak Topics
-           </h2>
-           {weakTopics.length > 0 ? (
-             <div className="space-y-3">
-               {weakTopics.map((topic, index) => {
-                 const masteryPct = getMasteryPercentage(topic);
-                 const insights = data.topicInsightsMap[topic.id];
-                 const commonMistakes = insights && insights.commonMistakes ? insights.commonMistakes.filter(m => m.occurrenceCount > 0) : [];
-                 const topMistake = commonMistakes.length > 0 ? commonMistakes[0] : null;
-                 return (
-                   <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
-                     <div className="flex items-start gap-3">
-                       <div className="flex-shrink-0">
-                         <span className="material-symbols-outlined text-[24px] text-warning">
-                           trending_down
-                         </span>
-                       </div>
-                       <div className="flex-1">
-                         <h3 className="text-base font-semibold text-on-surface mb-1">
-                           {topic.name}
-                         </h3>
-                         <p className="text-sm text-on-surface-variant mb-2">
-                           {masteryPct}% mastery
-                         </p>
-                         {topMistake && (
-                           <p className="text-xs text-on-surface-variant">
-                             Common: {topMistake.description}
-                           </p>
-                         )}
-                       </div>
-                     </div>
-                     <div className="w-full bg-surface-container-high rounded-full h-2.5 mb-2">
-                       <div
-                         className="h-full bg-warning rounded-full"
-                         style={{ width: `${masteryPct}%` }}
-                       ></div>
-                     </div>
-                     <div className="text-sm font-medium text-warning">
-                       {masteryPct}% mastery • Needs attention
-                     </div>
-                   </div>
-                 );
-               })}
-             </div>
-           ) : (
-             <EmptyState
-               title="No weak topics"
-               description="Keep up the great work! All topics are progressing well."
-               icon="check_circle"
-               actionText="Continue learning"
-               actionLink="/study"
-             />
-           )}
-         </section>
+          )}
+        </section>
 
-         {/* Study activity */}
-         <section className="mb-8">
-          <h2 className="text-xl font-bold text-on-surface mb-4">
+        {/* Study activity */}
+<section className="mb-8">
+           <h2 className="text-xl font-bold text-on-surface mb-4">
             Recent Study Activity
           </h2>
           {recentSessions.length > 0 ? (
@@ -674,8 +599,7 @@ export default function ProgressPage() {
               title="No study activity yet"
               description="Your study sessions will appear here as you learn."
               icon="history"
-              actionText="Start learning"
-              actionLink="/study"
+              action={<Link href="/study" className="text-primary hover:underline">Start learning</Link>}
             />
           )}
         </section>
@@ -715,8 +639,7 @@ export default function ProgressPage() {
               title="No recommendations"
               description="Keep learning and the system will suggest your next steps."
               icon="psychology"
-              actionText="Continue learning"
-              actionLink="/study"
+              action={<Link href="/study" className="text-primary hover:underline">Continue learning</Link>}
             />
           )}
         </section>

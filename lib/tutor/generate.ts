@@ -19,7 +19,7 @@ const GeneratedNextTurnSchema = z.object({
   explanation: z.string().nullable()
 });
 
-const NOT_FOUND = "I couldn't find that in your uploaded materials.";
+const _NOT_FOUND = "I couldn't find that in your uploaded materials.";
 
 const SYSTEM_PROMPT_QUESTION = `You are a study tutor helping a student learn from their own study materials.
 Generate one question that checks understanding of the key concept.

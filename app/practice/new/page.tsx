@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StudyShell } from "@/components/study-shell";
-import { Button, IconButton, Icon, Card, Skeleton, EmptyState } from "@/components/ui";
+import { Button } from "@/components/ui";
 
 interface Topic {
   id: string;
@@ -178,7 +178,7 @@ export default function PracticeNewPage() {
                             {getMasteryStateLabel(topic.mastery_state)}
                           </span>
                         </div>
-                        {topic.nextReviewAt && (
+                        {topic.next_review_at && (
                           <div className="text-xs text-on-surface-variant">
                             Next review: {new Date(topic.next_review_at).toLocaleDateString()}
                           </div>
@@ -214,7 +214,7 @@ export default function PracticeNewPage() {
                 className="px-3 py-1.5 rounded-lg bg-surface-container-low border border-surface-container-high text-on-surface hover:bg-surface-container hover:text-on-surface transition-colors"
               >
                 <span className="material-symbols-outlined text-[20px]">add</span>
-              </span>
+              </button>
               <p className="text-xs text-on-surface-variant ml-4">
                 (default: 5)
               </p>
@@ -256,7 +256,7 @@ export default function PracticeNewPage() {
               </div>
             </div>
             <p className="text-xs text-on-surface-variant mt-2">
-              Note: Only "Practice" mode is fully supported in this version.
+              Note: Only &quot;Practice&quot; mode is fully supported in this version.
             </p>
           </div>
 

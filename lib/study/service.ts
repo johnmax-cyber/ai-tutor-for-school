@@ -292,7 +292,7 @@ export class StudySessionService {
         .select("id, correct_count")
         .eq("user_id", userId)
         .eq("topic_id", question.topic_id)
-        .ilike("description", `%${result.misconception}%`);
+        .ilike("description", `%${result.misconception ?? ""}%`);
 
       const mistakes = existingMistakes ?? [];
       if (mistakes.length > 0) {

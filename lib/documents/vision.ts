@@ -1,6 +1,6 @@
 import { createCanvas, loadImage } from "canvas";
 import { createAIService } from "@/lib/ai/client";
-import type { AIService, VisionResult } from "@/lib/ai/types";
+import type { AIService } from "@/lib/ai/types";
 
 const MAX_IMAGE_LONG_EDGE = 2000;
 const MAX_IMAGE_PIXELS = 25 * 1024 * 1024;

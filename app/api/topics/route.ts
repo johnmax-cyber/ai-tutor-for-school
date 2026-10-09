@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
  * GET /api/topics
  * List user's topics
  */
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   const supabase = await createClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   

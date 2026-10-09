@@ -43,7 +43,7 @@ function createMockSupabase(
 
   return {
     storage: {
-      from: (bucket: string) => ({
+      from: (_bucket: string) => ({
         upload: async (path: string, data: Uint8Array) => {
           uploadedImages.push({ path, data });
           return { error: null, data: { path } };
@@ -63,7 +63,7 @@ function createMockSupabase(
     from: (table: string) => {
       if (table === "resources") {
         return {
-          select: (cols: string) => ({
+          select: (_cols: string) => ({
             eq: (col: string, val: string) => ({
               single: async () => {
                 const resource = resources.get(val);
@@ -101,7 +101,7 @@ function createMockSupabase(
               }),
             }),
           }),
-          select: (cols: string) => ({
+          select: (_cols: string) => ({
             eq: (col: string, val: unknown) => {
               // Return a thenable that resolves with matching rows (Supabase array pattern)
               const matching = resourceImages.filter(r => r[col] === val);
@@ -127,11 +127,11 @@ function createMockSupabase(
             }),
           }),
           insert: (data: Record<string, unknown>[]) => { resourceChunks.push(...(Array.isArray(data) ? data : [data])); return { error: null }; },
-          select: (cols: string) => ({
+          select: (_cols: string) => ({
             eq: (col: string, val: string) => ({
               eq: (col2: string, val2: Record<string, unknown>) => ({
                 eq: (col3: string, val3: Record<string, unknown>) => ({
-                  limit: (lim: number) => ({
+                  limit: (_lim: number) => ({
                     single: async () => {
                       const found = resourceChunks.find(r => r[col] === val && r[col2] === val2 && r[col3] === val3);
                       if (found) return { data: found, error: null };

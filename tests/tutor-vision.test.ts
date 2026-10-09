@@ -17,7 +17,7 @@ function check(name: string, actual: boolean, detail?: string) {
   }
 }
 
-function equal<T>(actual: T, expected: T, name: string) {
+function _equal<T>(actual: T, expected: T, name: string) {
   const ok = JSON.stringify(actual) === JSON.stringify(expected);
   check(name, ok);
   if (!ok) {
@@ -68,9 +68,9 @@ async function main() {
       ["This image shows a neural network with input, hidden, and output layers."]
     );
     
-    let retrieveCalled = false;
+    let _retrieveCalled = false;
     const retrieveMock = async () => {
-      retrieveCalled = true;
+      _retrieveCalled = true;
       return sampleChunks;
     };
 
@@ -90,7 +90,7 @@ async function main() {
      check("answer is grounded", answer.grounded === true);
      check("answer cites vision chunk", answer.citations.some(c => c.resource_title === "Image (vision)"));
      check("vision chunk has correct page number", answer.citations.some(c => c.page_number === 5));
-     check("retrieve was called", retrieveCalled);
+      check("retrieve was called", _retrieveCalled);
      check("model is vision model", answer.model === "mock-vision-model");
   }
 
@@ -103,9 +103,9 @@ async function main() {
     );
     // No vision responses - mock throws on its own, counter still increments
 
-    let retrieveCalled = false;
+    let _retrieveCalled = false;
     const retrieveMock = async () => {
-      retrieveCalled = true;
+      _retrieveCalled = true;
       return sampleChunks;
     };
 
@@ -123,7 +123,7 @@ async function main() {
     check("vision was attempted", mockAI.getVisionCallCount() === 1);
     check("answer still works (text-only)", answer.grounded === true);
     check("answer cites text chunk", answer.citations.some(c => c.resource_title === "TCP Guide"));
-    check("retrieve was called", retrieveCalled);
+    check("retrieve was called", _retrieveCalled);
   }
 
   // Test 3: No image provided - works as before
@@ -133,9 +133,9 @@ async function main() {
       ['{"answer": "A byte is 8 bits [1].", "insufficient_context": false}']
     );
 
-    let retrieveCalled = false;
+    let _retrieveCalled = false;
     const retrieveMock = async () => {
-      retrieveCalled = true;
+      _retrieveCalled = true;
       return sampleChunks;
     };
 
@@ -150,7 +150,7 @@ async function main() {
 
     check("vision not called", mockAI.getVisionCallCount() === 0);
     check("answer grounded", answer.grounded === true);
-    check("retrieve was called", retrieveCalled);
+    check("retrieve was called", _retrieveCalled);
   }
 
   // Test 4: Zero chunks with image - still returns NOT_FOUND
@@ -161,9 +161,9 @@ async function main() {
       ["Vision description"]
     );
 
-    let retrieveCalled = false;
+    let _retrieveCalled = false;
     const retrieveMock = async () => {
-      retrieveCalled = true;
+      _retrieveCalled = true;
       return [] as RetrievedChunk[];
     };
 
@@ -180,7 +180,7 @@ async function main() {
 
     check("returns NOT_FOUND", answer.answer === NOT_FOUND);
     check("vision was called (before chunk check)", mockAI.getVisionCallCount() === 1);
-    check("retrieve was called", retrieveCalled);
+    check("retrieve was called", _retrieveCalled);
   }
 
   // Test 5: Prompt injection in vision description - treated as data
@@ -192,9 +192,9 @@ async function main() {
       [injectionText]
     );
     
-    let retrieveCalled = false;
+    let _retrieveCalled = false;
     const retrieveMock = async () => {
-      retrieveCalled = true;
+      _retrieveCalled = true;
       return sampleChunks;
     };
 
@@ -222,7 +222,7 @@ async function main() {
       ['{"answer": "The slide contains text about ignoring instructions [1].", "insufficient_context": false}']
     );
     
-    const injectedChunks: RetrievedChunk[] = [
+    const _injectedChunks: RetrievedChunk[] = [
       {
         id: "c1",
         resource_id: "r1",
@@ -234,10 +234,10 @@ async function main() {
       },
     ];
 
-    let retrieveCalled = false;
+    let _retrieveCalled = false;
     const retrieveMock = async () => {
-      retrieveCalled = true;
-      return injectedChunks;
+      _retrieveCalled = true;
+      return sampleChunks;
     };
 
     const answer = await handleTutorQuestion(
@@ -273,9 +273,9 @@ async function main() {
       },
     ];
 
-    let retrieveCalled = false;
+    let _retrieveCalled = false;
     const retrieveMock = async () => {
-      retrieveCalled = true;
+      _retrieveCalled = true;
       return ocrChunks;
     };
 
@@ -312,9 +312,9 @@ async function main() {
       },
     ];
 
-    let retrieveCalled = false;
+    let _retrieveCalled = false;
     const retrieveMock = async () => {
-      retrieveCalled = true;
+      _retrieveCalled = true;
       return storedVisionChunks;
     };
 

@@ -1,5 +1,4 @@
 import { MasteryState } from "@/types/study";
-import { MistakePattern } from "@/types/study";
 
 /**
  * Lightweight mistake type for handoff - only includes fields needed for display

@@ -4,15 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { StudyShell } from "@/components/study-shell";
 import { 
-  Button, 
-  IconButton, 
-  Icon, 
-  Card, 
-  Skeleton, 
-  EmptyState, 
-  ErrorState,
-  ProgressBar,
-  Badge
+  EmptyState,
+  Button,
+  ProgressBar
 } from "@/components/ui";
 
 interface StudySession {
@@ -99,7 +93,7 @@ interface DashboardData {
   error: string | null;
 }
 
-export default async function HomePage() {
+export default function HomePage() {
   const [data, setData] = useState<DashboardData>({
     user: null,
     studyContext: null,
@@ -119,7 +113,7 @@ export default async function HomePage() {
       try {
         setData(prev => ({ ...prev, loading: true, error: null }));
         
-        const supabase = await (await import("@/lib/supabase/server")).createClient();
+        const supabase = (await import("@/lib/supabase/client")).createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -147,33 +141,34 @@ export default async function HomePage() {
           const sessionsData = await sessionsRes.json();
           const sessions = sessionsData.sessions || [];
           
-          recentSessions = sessions.slice(0, 5).map((session: any) => ({
-            id: session.id,
-            topic_name: session.topic_name,
-            subject_name: session.subject_name,
-            status: session.status,
-            started_at: session.started_at,
-            ended_at: session.ended_at,
-            questions_attempted: session.questions_attempted,
-            total_attempts: session.total_attempts,
-            correct_attempts: session.correct_attempts,
-            hints_used: session.hints_used,
+          recentSessions = sessions.slice(0, 5).map((session: Record<string, unknown>) => ({
+            id: session.id as string,
+            topic_name: session.topic_name as string,
+            subject_name: session.subject_name as string | null,
+            status: session.status as StudySession["status"],
+            started_at: session.started_at as string,
+            ended_at: session.ended_at as string | null,
+            questions_attempted: session.questions_attempted as number,
+            total_attempts: session.total_attempts as number,
+            correct_attempts: session.correct_attempts as number,
+            hints_used: session.hints_used as number,
           }));
           
-          activeSession = sessions.find((s: any) => s.status === "active") 
-            ? {
-                id: activeSession.id,
-                topic_name: activeSession.topic_name,
-                subject_name: activeSession.subject_name,
-                status: activeSession.status,
-                started_at: activeSession.started_at,
-                ended_at: activeSession.ended_at,
-                questions_attempted: activeSession.questions_attempted,
-                total_attempts: activeSession.total_attempts,
-                correct_attempts: activeSession.correct_attempts,
-                hints_used: activeSession.hints_used,
-              }
-            : null;
+           const foundActiveSession = sessions.find((s: Record<string, unknown>) => s.status === "active");
+           activeSession = foundActiveSession 
+             ? {
+                 id: foundActiveSession.id,
+                 topic_name: foundActiveSession.topic_name,
+                 subject_name: foundActiveSession.subject_name,
+                 status: foundActiveSession.status,
+                 started_at: foundActiveSession.started_at,
+                 ended_at: foundActiveSession.ended_at,
+                 questions_attempted: foundActiveSession.questions_attempted,
+                 total_attempts: foundActiveSession.total_attempts,
+                 correct_attempts: foundActiveSession.correct_attempts,
+                 hints_used: foundActiveSession.hints_used,
+               }
+             : null;
             
           const recentOrActive = activeSession || (sessions.length > 0 ? sessions[0] : null);
           if (recentOrActive) {
@@ -193,18 +188,18 @@ export default async function HomePage() {
         let topics: Topic[] = [];
         if (topicsRes.ok) {
           const topicsData = await topicsRes.json();
-          topics = (topicsData.topics || []).map((topic: any) => ({
-            id: topic.id,
-            name: topic.name,
-            description: topic.description,
-            subject_name: topic.subject_name,
-            mastery_state: topic.mastery_state,
-            total_attempts: topic.total_attempts,
-            correct_attempts: topic.correct_attempts,
-            hints_used: topic.hints_used,
-            last_studied: topic.last_studied,
-            next_review_at: topic.next_review_at,
-            resource_count: topic.resource_count || 0,
+          topics = (topicsData.topics || []).map((topic: Record<string, unknown>) => ({
+            id: topic.id as string,
+            name: topic.name as string,
+            description: topic.description as string | null,
+            subject_name: topic.subject_name as string | null,
+            mastery_state: topic.mastery_state as Topic["mastery_state"],
+            total_attempts: topic.total_attempts as number,
+            correct_attempts: topic.correct_attempts as number,
+            hints_used: topic.hints_used as number,
+            last_studied: topic.last_studied as string | null,
+            next_review_at: topic.next_review_at as string | null,
+            resource_count: (topic.resource_count as number) || 0,
           }));
         }
 
@@ -213,13 +208,13 @@ export default async function HomePage() {
         let mistakes: Mistake[] = [];
         if (mistakesRes.ok) {
           const mistakesData = await mistakesRes.json();
-          mistakes = (mistakesData.mistakes || []).map((mistake: any) => ({
-            id: mistake.id,
-            description: mistake.description,
-            incorrect_count: mistake.incorrect_count,
-            correct_count: mistake.correct_count,
-            last_seen: mistake.last_seen,
-            recurring: mistake.recurring,
+          mistakes = (mistakesData.mistakes || []).map((mistake: Record<string, unknown>) => ({
+            id: mistake.id as string,
+            description: mistake.description as string,
+            incorrect_count: mistake.incorrect_count as number,
+            correct_count: mistake.correct_count as number,
+            last_seen: mistake.last_seen as string,
+            recurring: mistake.recurring as boolean,
           }));
         }
 
@@ -357,7 +352,7 @@ export default async function HomePage() {
                           <span className="material-symbols-outlined text-[16px] text-outline">
                             timer
                           </span>
-                          <span>Last studied: {formatDate(data.studyContextSubjectLastStudied)}</span>
+                          <span>Last studied: {formatDate((data.recentSessions[0]?.started_at || data.activeSession?.started_at || ""))}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs font-mono">
                           <span className="material-symbols-outlined text-[16px] text-outline">
@@ -390,8 +385,7 @@ export default async function HomePage() {
                   title="Your study space is ready"
                   description="Add your first study resource to begin."
                   icon="add_circle"
-                  actionText="Upload resource →"
-                  actionLink="/library"
+                  action={<Link href="/library" className="text-primary hover:underline">Upload resource →</Link>}
                 />
               )}
             </section>
@@ -450,8 +444,7 @@ export default async function HomePage() {
                   title="No recommendations yet"
                   description="Start studying to get personalized suggestions."
                   icon="psychology"
-                  actionText="Begin learning"
-                  actionLink="/library"
+                  action={<Link href="/library" className="text-primary hover:underline">Begin learning</Link>}
                 />
               )}
             </section>
@@ -459,12 +452,12 @@ export default async function HomePage() {
             {/* Section 4: Today's Learning */}
             <section className="mb-6">
               <h2 className="text-xl font-bold text-on-surface mb-4">
-                Today's learning
+                Today&apos;s learning
               </h2>
               {data.todayActivities.length > 0 ? (
                 <div className="grid gap-4">
-                  {[Review, Practice, AskTutor].map((type) => {
-                    const activity = data.todayActivities.find(a => a.type === type.toLowerCase() as any);
+                  {["review", "practice", "ask_tutor"].map((type) => {
+                    const activity = data.todayActivities.find(a => a.type === type);
                     return (
                       <div key={type} className={activity ? 
                         "p-4 bg-surface-container-low rounded-lg border border-surface-container-high" :
@@ -486,10 +479,9 @@ export default async function HomePage() {
                                   {activity.description}
                                 </p>
                                 <div className="mb-3">
-                                  <ProgressBar
+                                <ProgressBar
                                     value={activity.progress}
-                                    showLabel={true}
-                                    label={`${activity.progress}% complete`}
+                                    className="mt-2"
                                   />
                                 </div>
                                 <div className="flex items-center gap-2 text-xs font-mono">
@@ -524,11 +516,10 @@ export default async function HomePage() {
                 </div>
               ) : (
                 <EmptyState
-                  title="No today's learning planned"
+                  title="No today&apos;s learning planned"
                   description="Set up your daily learning goals to get started."
                   icon="today"
-                  actionText="Set goals"
-                  actionLink="/study"
+                  action={<Link href="/study" className="text-primary hover:underline">Set goals</Link>}
                 />
               )}
             </section>
@@ -540,67 +531,69 @@ export default async function HomePage() {
               </h2>
               {data.topics.length > 0 ? (
                 <div className="space-y-3">
-                  {data.topics.map((topic, index) => (
-                    <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0">
-                          <span className="material-symbols-outioned text-[24px] text-primary">
-                            {getIconForSubject(topic.subject_name)}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-base font-semibold text-on-surface mb-1">
-                            {topic.name}
-                          </h3>
-                          {topic.description && (
-                            <p className="text-xs text-on-surface-variant mb-1">
-                              {topic.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 text-xs font-mono">
-                            <span className="material-symbols-outlined text-[16px] text-outline">
-                              folder
+                  {data.topics.map((topic, index) => {
+                    return (
+                      <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0">
+                            <span className="material-symbols-outioned text-[24px] text-primary">
+                              {getIconForSubject(topic.subject_name)}
                             </span>
-                            <span>{topic.resource_count} resources</span>
                           </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="material-symbols-outlined text-[16px] text-outline">
-                              psychology_alt
-                            </span>
-                            <span>{topic.masteryState.replace("_", " ")}</span>
-                          </div>
-                          <div className="w-full bg-surface-container-high rounded-full h-2.5">
-                            <div
-                              className="h-full bg-primary rounded-full"
-                              style={{ width: `${calculateTopicAccuracy(topic)}%` }}
-                            ></div>
-                          </div>
-                          <div className="text-sm font-medium text-primary mt-1">
-                            {calculateTopicAccuracy(topic)}% mastery
-                          </div>
-                          {topic.nextReviewAt && (
-                            <div className="text-xs text-on-surface-variant mt-2">
-                              Next review: {formatDate(topic.nextReviewAt)}
+                          <div className="flex-1">
+                            <h3 className="text-base font-semibold text-on-surface mb-1">
+                              {topic.name}
+                            </h3>
+                            {topic.description && (
+                              <p className="text-xs text-on-surface-variant mb-1">
+                                {topic.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 text-xs font-mono">
+                              <span className="material-symbols-outlined text-[16px] text-outline">
+                                folder
+                              </span>
+                              <span>{topic.resource_count} resources</span>
                             </div>
-                          )}
-                          <Link
-                            href={`/topics`}
-                            className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-sm hover:opacity-90 transition-opacity"
-                          >
-                            View topic details
-                            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                          </Link>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="material-symbols-outlined text-[16px] text-outline">
+                                psychology_alt
+                              </span>
+                              <span>{topic.mastery_state.replace("_", " ")}</span>
+                            </div>
+                            <div className="w-full bg-surface-container-high rounded-full h-2.5">
+                              <div
+                                className="h-full bg-primary rounded-full"
+                                style={{ width: `${calculateTopicAccuracy(topic)}%` }}
+                              ></div>
+                            </div>
+                            <div className="text-sm font-medium text-primary mt-1">
+                              {calculateTopicAccuracy(topic)}% mastery
+                            </div>
+                            {topic.next_review_at && (
+                              <div className="text-xs text-on-surface-variant mt-2">
+                                Next review: {formatDate(topic.next_review_at)}
+                              </div>
+                            )}
+                            <Link
+                              href={`/topics`}
+                              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-sm hover:opacity-90 transition-opacity"
+                            >
+                              View topic details
+                              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                            </Link>
+                          </div>
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                 </div>
-              ) : (
+            ) : (
                 <EmptyState
                   title="No subjects yet"
                   description="Create your first topic to start tracking progress."
                   icon="category"
-                  actionText="Create topic"
-                  actionLink="/topics"
+                  action={<Link href="/topics" className="text-primary hover:underline">Create topic</Link>}
                 />
               )}
             </section>
@@ -640,21 +633,18 @@ export default async function HomePage() {
                   title="No recent activity"
                   description="Your learning activity will appear here as you study."
                   icon="history"
-                  actionText="Start learning"
-                  actionLink="/study"
+                  action={<Link href="/study" className="text-primary hover:underline">Start learning</Link>}
                 />
               )}
             </section>
-
             {/* Section 7: Review Recommendations */}
             <section className="mb-6">
               <h2 className="text-xl font-bold text-on-surface mb-4">
                 Review recommendations
               </h2>
-              const reviewMistakes = data.mistakes.filter(m => m.recurring || m.incorrect_count >= 2);
-              {reviewMistakes.length > 0 ? (
+              {data.mistakes.filter(m => m.recurring || m.incorrect_count >= 2).length > 0 ? (
                 <div className="space-y-3">
-                  {reviewMistakes.map((mistake, index) => (
+                  {data.mistakes.filter(m => m.recurring || m.incorrect_count >= 2).map((mistake, index) => (
                     <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0">
@@ -695,14 +685,12 @@ export default async function HomePage() {
                   title="No items need review"
                   description="Keep up the great work! Nothing needs review right now."
                   icon="check_circle"
-                  actionText="Continue learning"
-                  actionLink="/study"
+                  action={<Link href="/study" className="text-primary hover:underline">Continue learning</Link>}
                 />
               )}
             </section>
           </>
         )}
-      </div>
 
         {isNewUser && (
           <div className="max-w-2xl mx-auto p-6">
@@ -710,8 +698,7 @@ export default async function HomePage() {
               title="Your study space is ready"
               description="Add your first study resource to begin your learning journey."
               icon="school"
-              actionText="Upload resource →"
-              actionLink="/library"
+              action={<Link href="/library" className="text-primary hover:underline">Upload resource →</Link>}
             />
           </div>
         )}
@@ -820,7 +807,7 @@ function generateRecommendations(
       actionText: "Continue session",
       actionLink: `/study/${activeSession.id}`,
       topicName: activeSession.topic_name,
-      subjectName: activeSession.subject_name,
+      subjectName: activeSession.subject_name ?? undefined,
     });
     return recommendations;
   }
@@ -845,7 +832,7 @@ function generateRecommendations(
   const weakTopics = topics.filter(t => 
     t.total_attempts > 0 && 
     calculateTopicAccuracy(t) < 70 && 
-    t.masteryState !== "not_started"
+    t.mastery_state !== "not_started"
   );
   if (weakTopics.length > 0) {
     const topic = weakTopics[0];
@@ -857,7 +844,7 @@ function generateRecommendations(
       actionText: "Start practice",
       actionLink: `/study/new?topicId=${topic.id}`,
       topicName: topic.name,
-      subjectName: topic.subject_name,
+      subjectName: topic.subject_name ?? undefined,
     });
     return recommendations;
   }
@@ -877,7 +864,7 @@ function generateRecommendations(
       actionText: "Begin session",
       actionLink: `/study/new?topicId=${topic.id}`,
       topicName: topic.name,
-      subjectName: topic.subject_name,
+      subjectName: topic.subject_name ?? undefined,
     });
     return recommendations;
   }
@@ -898,7 +885,7 @@ function generateRecommendations(
       actionText: "Ask tutor",
       actionLink: "/tutor",
       topicName: firstTopic.name,
-      subjectName: firstTopic.subject_name,
+      subjectName: firstTopic.subject_name ?? undefined,
     });
   }
 
@@ -906,8 +893,8 @@ function generateRecommendations(
 }
 
 function generateTodayActivities(
-  studyContext: { topicName: string; subjectName: string | null; accuracy: number; masteryState: string } | null,
-  activeSession: StudySession | null
+  _studyContext: { topicName: string; subjectName: string | null; accuracy: number; masteryState: string } | null,
+  _activeSession: StudySession | null
 ): TodayActivity[] {
   const activities: TodayActivity[] = [];
   
@@ -950,7 +937,7 @@ async function fetchRecentActivity(userId: string): Promise<RecentActivityItem[]
     // For now, we'll return mock data based on what we have available
     
     // Try to fetch actual data from Supabase if possible
-    const supabase = await (await import("@/lib/supabase/server")).createClient();
+    const supabase = await (await import("@/lib/supabase/client")).createClient();
     
     // Fetch recent sessions
     const { data: sessions, error: sessionsError } = await supabase
@@ -982,7 +969,7 @@ async function fetchRecentActivity(userId: string): Promise<RecentActivityItem[]
             id: session.id,
             type: "practice_completed",
             title: `Completed study session: ${topicName}`,
-            description: `${session.subject_name || subjectName} • ${session.total_attempts} questions • ${Math.round((session.correct_attempts / session.total_attempts) * 100)}% accuracy`,
+            description: `${subjectName || "Unknown subject"} • ${session.total_attempts} questions • ${Math.round((session.correct_attempts / session.total_attempts) * 100)}% accuracy`,
             timestamp: session.ended_at,
             icon: "timer",
           });
@@ -991,7 +978,7 @@ async function fetchRecentActivity(userId: string): Promise<RecentActivityItem[]
             id: session.id,
             type: "tutor_session",
             title: `Active study session: ${topicName}`,
-            description: `${session.subject_name || subjectName} • ${session.total_attempts} questions attempted`,
+            description: `${subjectName || "Unknown subject"} • ${session.total_attempts} questions attempted`,
             timestamp: session.started_at,
             icon: "psychology",
           });

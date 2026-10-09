@@ -3,17 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { StudyShell } from "@/components/study-shell";
-import { 
-  Button, 
-  IconButton, 
-  Icon, 
-  Card, 
-  Skeleton, 
-  EmptyState, 
-  ErrorState,
-  ProgressBar,
-  Badge
-} from "@/components/ui";
+import { Button, EmptyState } from "@/components/ui";
 
 interface StudySession {
   id: string;
@@ -49,7 +39,7 @@ interface PracticeData {
   topics: Topic[];
   recommendations: {
     continue: StudySession | null;
-    recommended: { topic: Topic; reason: string } | null;
+    recommended: { topic: Topic | null; reason: string } | null;
     subjects: { name: string; topicCount: number }[];
     concepts: { topic: Topic; reason: string }[];
     recentPractice: StudySession[];
@@ -82,7 +72,7 @@ export default function PracticePage() {
       try {
         setData(prev => ({ ...prev, loading: true, error: null }));
         
-        const supabase = await (await import("@/lib/supabase/server")).createClient();
+        const supabase = (await import("@/lib/supabase/client")).createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -102,9 +92,9 @@ export default function PracticePage() {
         let recentSessions: StudySession[] = [];
         if (sessionsRes.ok) {
           const sessionsData = await sessionsRes.json();
-          const sessions = (sessionsData.sessions || []).as StudySession[];
+          const sessions = (sessionsData.sessions || []) as StudySession[];
           
-          activeSession = sessions.find(s => s.status === "active");
+          activeSession = sessions.find(s => s.status === "active") ?? null;
           recentSessions = sessions
             .filter(s => s.status === "completed")
             .slice(0, 5)
@@ -116,7 +106,7 @@ export default function PracticePage() {
         let topics: Topic[] = [];
         if (topicsRes.ok) {
           const topicsData = await topicsRes.json();
-          topics = (topicsData.topics || []).as Topic[];
+          topics = (topicsData.topics || []) as Topic[];
         } else {
           throw new Error("Failed to load topics");
         }
@@ -293,8 +283,7 @@ export default function PracticePage() {
               title="No active practice"
               description="Start a new practice session to begin learning."
               icon="psyche"
-              actionText="Start practice"
-              actionLink="/practice/new"
+              action={<Link href="/practice/new" className="text-primary hover:underline">Start practice</Link>}
             />
           )}
         </section>
@@ -304,7 +293,7 @@ export default function PracticePage() {
           <h2 className="text-xl font-bold text-on-surface mb-4">
             Recommended for you
           </h2>
-          {data.recommendations.recommended.topic ? (
+          {data.recommendations.recommended?.topic ? (
             <div className="p-6 bg-surface-container-low rounded-lg border border-surface-container-high">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
@@ -348,8 +337,7 @@ export default function PracticePage() {
               title="No recommendations yet"
               description="Start practicing to get personalized suggestions."
               icon="psyche"
-              actionText="Start practice"
-              actionLink="/practice/new"
+              action={<Link href="/practice/new" className="text-primary hover:underline">Start practice</Link>}
             />
           )}
         </section>
@@ -393,8 +381,7 @@ export default function PracticePage() {
               title="No subjects yet"
               description="Create topics and assign them to subjects to see subject-based practice."
               icon="category"
-              actionText="Create topic"
-              actionLink="/topics"
+              action={<Link href="/topics" className="text-primary hover:underline">Create topic</Link>}
             />
           )}
         </section>
@@ -438,8 +425,7 @@ export default function PracticePage() {
               title="No concepts yet"
               description="Create topics to see concept-based practice."
               icon="psychology_alt"
-              actionText="Create topic"
-              actionLink="/topics"
+              action={<Link href="/topics" className="text-primary hover:underline">Create topic</Link>}
             />
           )}
         </section>
@@ -467,7 +453,7 @@ export default function PracticePage() {
                         {session.subject_name || "No subject"}
                       </p>
                       <p className="text-xs text-on-surface-variant">
-                        {session.formattedDate} • {session.questions_attempted} questions • {session.correct_attempts > 0 ? Math.round((session.correct_attempts / session.total_attempts) * 100) : 0}% accuracy
+                        {new Date(session.started_at).toLocaleDateString()} • {session.questions_attempted} questions • {session.correct_attempts > 0 ? Math.round((session.correct_attempts / session.total_attempts) * 100) : 0}% accuracy
                       </p>
                     </div>
                   </div>
@@ -479,8 +465,7 @@ export default function PracticePage() {
               title="No recent practice"
               description="Your practice sessions will appear here as you learn."
               icon="history"
-              actionText="Start practice"
-              actionLink="/practice/new"
+              action={<Link href="/practice/new" className="text-primary hover:underline">Start practice</Link>}
             />
           )}
         </section>
@@ -524,8 +509,7 @@ export default function PracticePage() {
               title="No mistakes to review"
               description="Great job! No mistakes need review right now."
               icon="check_circle"
-              actionText="Start practice"
-              actionLink="/practice/new"
+              action={<Link href="/practice/new" className="text-primary hover:underline">Start practice</Link>}
             />
           )}
         </section>

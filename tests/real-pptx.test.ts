@@ -20,8 +20,8 @@ function check(name: string, actual: boolean, detail?: string) {
 function createMockSupabase() {
   return {
     storage: {
-      from: (bucket: string) => ({
-        upload: async (path: string, data: Uint8Array) => {
+      from: (_bucket: string) => ({
+        upload: async (path: string, _data: Uint8Array) => {
           return { error: null, data: { path } };
         },
       }),

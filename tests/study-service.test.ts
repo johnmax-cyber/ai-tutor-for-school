@@ -305,8 +305,8 @@ function executeQuery(tableName: string, state: QueryBuilderState) {
     auth: {
       getUser: () => Promise.resolve({ data: { user: { id: "test-user-id" } }, error: null })
     },
-    rpc: (fn: string, params: unknown) => {
-      if (fn === "search_resource_chunks_by_topic") {
+    rpc: (_fn: string, _params: unknown) => {
+      if (_fn === "search_resource_chunks_by_topic") {
         return Promise.resolve({ data: [], error: null });
       }
       return Promise.resolve({ data: [], error: null });
@@ -317,7 +317,7 @@ function executeQuery(tableName: string, state: QueryBuilderState) {
 }
 
 // Mock retrieve function
-const mockRetrieve = async (topicName: string): Promise<RetrievedChunk[]> => [
+const mockRetrieve = async (_topicName: string): Promise<RetrievedChunk[]> => [
   {
     id: "c1",
     resource_id: "r1",

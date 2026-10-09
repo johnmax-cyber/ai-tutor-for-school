@@ -16,7 +16,7 @@ const studySessionService = new StudySessionService({
  * GET /api/study/sessions
  * List user's study sessions
  */
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   const supabase = await createClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   

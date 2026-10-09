@@ -7,7 +7,7 @@ import {
 } from "../lib/study/analytics";
 import { calculateNextReview, Sm2Attempt } from "../lib/study/mastery";
 import { getMistakePatterns, MistakePatternInput } from "../lib/study/mistakes";
-import { generateHandoff, HandoffInput } from "../lib/study/handoff";
+import { generateHandoff } from "../lib/study/handoff";
 
 let passed = 0;
 let failed = 0;

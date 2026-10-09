@@ -106,11 +106,11 @@ async function main() {
   const result = await generateQuestion(generateChunks, "Light", mockQuestionAI);
   check("generateQuestion returned a valid question", !!result.question);
 
-  const questionCallLog = mockQuestionAI.getCallLog();
+  const questionCallLog = mockQuestionAI.getCallLog!();
   check("generateQuestion made at least one AI call", questionCallLog.length >= 1);
 
-  const questionMessages = questionCallLog[0];
-  const questionSystemMsg = questionMessages.find((m) => m.role === "system")?.content ?? "";
+  const questionMessages = questionCallLog[0] as Array<{ role: string; content: string }>;
+  const questionSystemMsg = questionMessages.find((m: { role: string; content: string }) => m.role === "system")?.content ?? "";
 
   // Finding: generate.ts exports SYSTEM_PROMPT_QUESTION but NOT SYSTEM_PROMPT_NEXT_TURN,
   // buildQuestionMessages, or buildNextTurnMessages. Verify via call log only.
@@ -135,7 +135,7 @@ async function main() {
   );
 
   // generate.ts escapeXml only replaces < -> ‹ and > -> › (Unicode, NOT entities)
-  const questionUserMsg = questionMessages.find((m) => m.role === "user")?.content ?? "";
+  const questionUserMsg = questionMessages.find((m: { role: string; content: string }) => m.role === "user")?.content ?? "";
   check(
     "generate.ts escapeXml replaces < with Unicode ‹ (U+2039)",
     questionUserMsg.includes("\u2039"),
@@ -191,10 +191,10 @@ async function main() {
     // Even if parsing fails, callLog captures the messages
   }
 
-  const nextTurnLog = nextTurnAI.getCallLog();
+  const nextTurnLog = nextTurnAI.getCallLog!();
   if (nextTurnLog.length > 0) {
-    const ntMessages = nextTurnLog[0];
-    const ntSystemMsg = ntMessages.find((m) => m.role === "system")?.content ?? "";
+    const ntMessages = nextTurnLog[0] as Array<{ role: string; content: string }>;
+    const ntSystemMsg = ntMessages.find((m: { role: string; content: string }) => m.role === "system")?.content ?? "";
 
     warn(
       "SYSTEM_PROMPT_NEXT_TURN lacks injection-defense text",
@@ -209,7 +209,7 @@ async function main() {
     );
 
     // Chunk content in next-turn user message is escaped (Unicode ‹/›)
-    const ntUserMsg = ntMessages.find((m) => m.role === "user")?.content ?? "";
+    const ntUserMsg = ntMessages.find((m: { role: string; content: string }) => m.role === "user")?.content ?? "";
     check(
       "generateNextTurn user message escapes chunk content",
       ntUserMsg.includes("\u2039") || ntUserMsg.includes("\u203a"),

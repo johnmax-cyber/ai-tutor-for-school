@@ -19,7 +19,6 @@ function loadEnv() {
 loadEnv();
 
 import { createClient } from "@supabase/supabase-js";
-import { createMockAI } from "../lib/ai/mock";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
@@ -110,7 +109,7 @@ async function main() {
     if (!assignError) {
       // Try to create session via API
       const { createMockAI } = await import("../lib/ai/mock");
-      const mockAI = createMockAI([
+      const _mockAI = createMockAI([
         JSON.stringify({
           question: "Test question?",
           answer_key: "Test answer",

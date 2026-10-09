@@ -19,7 +19,6 @@ function loadEnv() {
 loadEnv();
 
 import { createClient } from "@supabase/supabase-js";
-import { retrieveChunks } from "../lib/tutor/retrieve";
 import type { RetrievedChunk } from "../lib/tutor/retrieve";
 import goldenCases from "./tutor-golden.json";
 

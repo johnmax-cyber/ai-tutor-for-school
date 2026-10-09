@@ -1,4 +1,15 @@
 {
   "$schema": "https://app.kilo.ai/config.json",
-  "snapshot": false
+  "snapshot": false,
+  "mcp": {
+    "n8n-mcp": {
+      "type": "remote",
+      "url": "http://localhost:5678/mcp-server/http",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkOWJjNjIyNi1mM2Y0LTRkNWUtYTk3MS1mMTU5ODg5NGU0NjMiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjVlMjdkMTY2LTU4M2QtNDIxMC04ZmFmLTNhMThlYTg0MjY4MiIsImlhdCI6MTc5MTU0MzE3MX0.7mt4jbrL7aoS1gFglbXPlJVidCRudFE31OQyKSvDKYI"
+      },
+      "oauth": false,
+      "timeout": 30000
+    }
+  }
 }

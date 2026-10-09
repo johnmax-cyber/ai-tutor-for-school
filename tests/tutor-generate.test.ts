@@ -84,8 +84,8 @@ async function runTests() {
     check("generateQuestion returns hint", !!result.hint);
     equal(result.question, "How many bits are in a byte?", "question matches expected");
     equal(result.answer_key, "8 bits", "answer_key matches expected");
-  } catch (err) {
-    console.error("generateQuestion failed:", err);
+  } catch (_err) {
+    console.error("generateQuestion failed:", _err);
     check("generateQuestion throws no error", false);
   }
 
@@ -104,8 +104,8 @@ async function runTests() {
     check("generateNextTurn returns next_question", !!result.next_question);
     equal(result.is_correct, true, "is_correct is true");
     equal(result.hint, null, "hint is null when correct");
-  } catch (err) {
-    console.error("generateNextTurn (correct) failed:", err);
+  } catch (_err) {
+    console.error("generateNextTurn (correct) failed:", _err);
     check("generateNextTurn (correct) throws no error", false);
   }
 
@@ -124,8 +124,8 @@ async function runTests() {
     check("generateNextTurn returns next_question null", result.next_question === null);
     equal(result.is_correct, false, "is_correct is false");
     equal(result.misconception, "Confused multiplication with addition", "misconception captured");
-  } catch (err) {
-    console.error("generateNextTurn (incorrect) failed:", err);
+  } catch (_err) {
+    console.error("generateNextTurn (incorrect) failed:", _err);
     check("generateNextTurn (incorrect) throws no error", false);
   }
 
@@ -135,7 +135,7 @@ async function runTests() {
   try {
     await generateQuestion(mockChunks, "Test", badAI);
     check("generateQuestion rejects malformed JSON", false);
-  } catch (err) {
+  } catch (_err) {
     check("generateQuestion throws on malformed JSON", true);
   }
 
@@ -146,7 +146,7 @@ async function runTests() {
   try {
     await generateQuestion(mockChunks, "Test", incompleteAI);
     check("generateQuestion rejects incomplete JSON", false);
-  } catch (err) {
+  } catch (_err) {
     check("generateQuestion throws on incomplete JSON", true);
   }
 

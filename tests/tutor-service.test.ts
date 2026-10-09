@@ -1,6 +1,5 @@
 import { handleTutorQuestion } from "../lib/tutor/service";
 import { createMockAI } from "../lib/ai/mock";
-import { TutorAnswer } from "@/types/tutor";
 import { NOT_FOUND } from "../lib/tutor/prompt";
 import { RetrievedChunk } from "../lib/tutor/retrieve";
 

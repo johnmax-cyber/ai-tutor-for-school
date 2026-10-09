@@ -1,8 +1,10 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { StudyShell } from "@/components/study-shell";
 import Link from "next/link";
-import { Button, Card, Skeleton, EmptyState, Alert } from "@/components/ui";
-import { createClient } from "@/lib/supabase/server";
+import { Button, Card, EmptyState } from "@/components/ui";
+import { createClient } from "@/lib/supabase/client";
 
 interface Mistake {
   id: string;
@@ -33,43 +35,43 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = await createClient();
-
   useEffect(() => {
     async function loadReviewData() {
       setLoading(true);
       setError(null);
 
+      const supabase = createClient();
+
       try {
         // Fetch mistakes
-        const { data: mistakesData, errors } = await supabase
+        const { data: mistakesData, error } = await supabase
           .from("mistakes")
           .select("*")
           .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
           .order("last_seen", { ascending: false });
 
-        if (errors) throw errors;
+        if (error) throw error;
         setMistakes(mistakesData || []);
 
         // Fetch topics with mistake counts
-        const topicIds = [...new Set(mistakesData?.map((m: any) => m.topic_id) || [])];
-        const { data: topicsData, errors: topicsErrors } = await supabase
+        const topicIds = [...new Set(mistakesData?.map((m: Mistake) => m.topic_id) || [])];
+        const { data: topicsData, error: topicsError } = await supabase
           .from("topics")
           .select("*")
           .in("id", topicIds);
 
-        if (topicsErrors) throw topicsErrors;
+        if (topicsError) throw topicsError;
 
         const mistakeCounts: Record<string, number> = {};
-        mistakesData?.forEach((m: any) => {
+        mistakesData?.forEach((m: Mistake) => {
           mistakeCounts[m.topic_id] = (mistakeCounts[m.topic_id] || 0) + m.incorrect_count;
         });
 
         setReviewTopics(
-          (topicsData || []).map((topic: any) => ({
+          (topicsData || []).map((topic: { id: string; name: string; mastery_state: string; total_attempts: number; correct_attempts: number; hints_used: number; last_studied: string | null }) => ({
             id: topic.id,
             name: topic.name,
-            mastery_state: topic.mastery_state,
+            mastery_state: topic.mastery_state as ReviewTopic["mastery_state"],
             total_attempts: topic.total_attempts,
             correct_attempts: topic.correct_attempts,
             hints_used: topic.hints_used,
@@ -85,7 +87,7 @@ export default function ReviewPage() {
     }
 
     loadReviewData();
-  }, [supabase]);
+  }, []);
 
   if (loading) {
     return (
@@ -155,7 +157,7 @@ export default function ReviewPage() {
               </p>
             ) : (
               <div className="space-y-3">
-                {mistakes.slice(0, 5).map((mistake: any) => (
+                {mistakes.slice(0, 5).map((mistake: Mistake) => (
                   <div key={mistake.id} className="p-3 bg-surface-container-low rounded-lg border border-surface-container-high">
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0">
@@ -220,8 +222,7 @@ export default function ReviewPage() {
               title="No topics need review"
               description="Great job! All topics are strong. Keep up the learning."
               icon="check_circle"
-              actionText="Continue learning"
-              actionLink="/study"
+              action={<Link href="/study" className="text-primary hover:underline">Continue learning</Link>}
             />
           )}
         </div>

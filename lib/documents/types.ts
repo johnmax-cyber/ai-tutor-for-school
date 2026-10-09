@@ -18,7 +18,7 @@ export interface ResourceTypeDetection {
 export function detectResourceType(
   filename: string,
   mimeType: string,
-  sizeBytes: number,
+  _sizeBytes: number,
 ): ResourceTypeDetection {
   const ext = filename.toLowerCase().split(".").pop();
 
