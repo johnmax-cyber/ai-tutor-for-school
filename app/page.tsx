@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StudyShell } from "@/components/study-shell";
 import { 
   EmptyState,
@@ -94,6 +95,7 @@ interface DashboardData {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData>({
     user: null,
     studyContext: null,
@@ -117,9 +119,8 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-          // Redirect to login if not authenticated
-          const { redirect } = await import("next/navigation");
-          redirect("/login");
+          // Redirect to login if not authenticated (client-side navigation)
+          router.push("/login");
           return;
         }
 
@@ -259,7 +260,7 @@ export default function HomePage() {
     }
 
     loadDashboardData();
-  }, []);
+  }, [router]);
 
   if (data.loading) {
     return (

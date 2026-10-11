@@ -71,7 +71,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -83,5 +83,23 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"
-  }
+  },
+  "description": "AI Tutor for School — a Next.js app where students upload study PDFs and ask questions grounded in their own documents.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://ghp_picQuMjaToYNTa2djeE7i4KstzZtp62hZEa@github.com/johnmax-cyber/ai-tutor-for-school.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/johnmax-cyber/ai-tutor-for-school/issues"
+  },
+  "homepage": "https://github.com/johnmax-cyber/ai-tutor-for-school#readme"
 }
