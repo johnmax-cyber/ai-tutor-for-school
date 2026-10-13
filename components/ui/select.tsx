@@ -13,7 +13,7 @@ export function Select({ className, error, placeholder, children, ...props }: Se
     <div className="relative">
       <select
         className={cn(
-          "w-full appearance-none rounded-lg border border-border bg-surface-container px-3.5 py-2.5 text-base text-foreground placeholder-foreground-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-(color: var(--focus-ring)) transition-colors",
+          "w-full appearance-none rounded-lg border border-border bg-surface-container px-4 py-3 text-base text-foreground placeholder-foreground-tertiary pr-10 bg-[url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M19 9l-7 7-7-7\"/></svg>')_right-3_center_no-repeat] focus:border-primary focus:outline-none focus:ring-2 focus:ring-(color: var(--focus-ring)) transition-colors duration-150 touch-target",
           error && "border-error focus:border-error",
           className,
         )}

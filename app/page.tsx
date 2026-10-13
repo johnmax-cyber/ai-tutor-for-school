@@ -7,8 +7,21 @@ import { StudyShell } from "@/components/study-shell";
 import { 
   EmptyState,
   Button,
-  ProgressBar
+  ProgressBar,
+  MetricCard,
+  TodayFocusCard,
+  RecommendationsList,
+  StatsGrid,
+  AchievementsList
 } from "@/components/ui";
+
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  date: string;
+}
 
 interface StudySession {
   id: string;
@@ -91,6 +104,7 @@ interface DashboardData {
   recommendations: Recommendation[];
   todayActivities: TodayActivity[];
   recentActivity: RecentActivityItem[];
+  achievements: Achievement[];
   loading: boolean;
   error: string | null;
 }
@@ -107,6 +121,7 @@ export default function HomePage() {
     recommendations: [],
     todayActivities: [],
     recentActivity: [],
+    achievements: [],
     loading: true,
     error: null,
   });
@@ -238,6 +253,13 @@ export default function HomePage() {
         // Fetch recent activity (combine various sources)
         const recentActivity: RecentActivityItem[] = await fetchRecentActivity(userId);
 
+        // Generate achievements (mock data for now)
+        const achievements: Achievement[] = [
+          { id: "1", title: "Streak Master", description: "Maintained a 7-day learning streak", icon: "fire", date: new Date().toISOString() },
+          { id: "2", title: "Quick Learner", description: "Completed 10 sessions this week", icon: "speed", date: new Date().toISOString() },
+          { id: "3", title: "Perfect Score", description: "Achieved 100% on a practice session", icon: "star", date: new Date().toISOString() },
+        ];
+
         setData({
           user: userData,
           studyContext,
@@ -248,6 +270,7 @@ export default function HomePage() {
           recommendations,
           todayActivities,
           recentActivity,
+          achievements,
           loading: false,
           error: null,
         });
@@ -310,388 +333,108 @@ export default function HomePage() {
 
   return (
     <StudyShell>
-      <div className="max-w-4xl mx-auto p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {!isNewUser && (
           <>
-            {/* Section 1: Greeting / Context */}
-            <section className="mb-6">
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0">
-                  <span className="material-symbols-outlined text-primary text-[36px]">
-                    person
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-on-surface-variant">
-                    Good {getTimeOfGreeting()}, 
-                    {data.user?.name?.split(" ")[0] ?? "there"}!
-                  </p>
-                  <p className="text-base font-semibold text-on-surface">
-                    Ready to continue learning?
-                  </p>
+            {/* Hero Section */}
+            <section className="mb-8">
+              <div className="bg-gradient-to-br from-primary/10 to-transparent rounded-2xl p-8">
+                <h1 className="text-3xl font-bold text-primary mb-4">
+                  Welcome Back, {data.user?.name?.split(" ")[0] ?? "there"}!
+                </h1>
+                <p className="text-lg text-on-surface-variant">
+                  Continue your learning journey with personalized recommendations
+                </p>
+                <div className="flex items-center gap-4 mt-6">
+                  <Link href="/study" className="btn-primary px-6 py-3">
+                    <span className="material-symbols-outlined mr-2">play_arrow</span>
+                    Continue Learning
+                  </Link>
+                  <Link href="/library" className="btn-outline px-6 py-3">
+                    <span className="material-symbols-outlined mr-2">add_circle</span>
+                    Add Resources
+                  </Link>
                 </div>
               </div>
             </section>
 
-            {/* Section 2: Continue Learning */}
-            <section className="mb-6">
-              {data.studyContext ? (
-                <div className="card-container">
-                  <div className="flex items-start gap-4 p-6 bg-surface-container-low rounded-xl border border-surface-container-high">
-                    <div className="flex-shrink-0">
-                      <span className="material-symbols-outlined text-primary text-[48px]">
-                        {getIconForSubject(data.studyContext.subjectName)}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <h2 className="text-lg font-semibold text-on-surface mb-2">
-                        {data.studyContext.subjectName || "Your Studies"}
-                      </h2>
-                      <p className="text-base text-on-surface-variant mb-2">
-                        {data.studyContext.topicName || "Continue your learning"}
-                      </p>
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="flex items-center gap-2 text-xs font-mono">
-                          <span className="material-symbols-outlined text-[16px] text-outline">
-                            timer
-                          </span>
-                          <span>Last studied: {formatDate((data.recentSessions[0]?.started_at || data.activeSession?.started_at || ""))}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs font-mono">
-                          <span className="material-symbols-outlined text-[16px] text-outline">
-                            psychology_alt
-                          </span>
-                          <span>{data.studyContext.masteryState.replace("_", " ")}</span>
-                        </div>
-                      </div>
-                      <div className="w-full bg-surface-container-high rounded-full h-2.5 mb-3">
-                        <div
-                          className="h-full bg-primary rounded-full"
-                          style={{ width: `${data.studyContext.accuracy}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-sm font-medium text-primary">
-                        {data.studyContext.accuracy}% mastery
-                      </div>
-                      <Link
-                        href="/study"
-                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-semibold hover:opacity-90 transition-opacity"
-                      >
-                        Continue studying →
-                        <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <EmptyState
-                  title="Your study space is ready"
-                  description="Add your first study resource to begin."
-                  icon="add_circle"
-                  action={<Link href="/library" className="text-primary hover:underline">Upload resource →</Link>}
-                />
-              )}
+            {/* Key Metrics */}
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <MetricCard 
+                title="Streak" 
+                value={(data.activeSession || data.recentSessions[0]) ? "Active" : "0 days"} 
+                icon="fire" 
+                color="secondary" 
+              />
+              <MetricCard 
+                title="Mastery" 
+                value={data.studyContext ? `${data.studyContext.accuracy}%` : "N/A"} 
+                icon="psychology_alt" 
+                color="primary" 
+              />
+              <MetricCard 
+                title="Resources" 
+                value={data.topics.reduce((sum, t) => sum + t.resource_count, 0)} 
+                icon="library_books" 
+                color="accent" 
+              />
+              <MetricCard 
+                title="Questions" 
+                value={data.recentSessions.reduce((sum, s) => sum + s.total_attempts, 0)} 
+                icon="quiz" 
+                color="success" 
+              />
             </section>
 
-            {/* Section 3: Next Best Action */}
-            <section className="mb-6">
-              <h2 className="text-xl font-bold text-on-surface mb-4">
-                What should you do next?
-              </h2>
-              {data.recommendations.length > 0 ? (
-                <div className="space-y-3">
-                  {data.recommendations.map((rec, index) => (
-                    <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0">
-                          <span className="material-symbols-outlined text-[24px] text-primary">
-                            {getRecommendationIcon(rec.type)}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-base font-semibold text-on-surface mb-1">
-                            {rec.title}
-                          </h3>
-                          <p className="text-sm text-on-surface-variant mb-2">
-                            {rec.description}
-                          </p>
-                          <div className="flex items-center gap-3 text-xs font-mono text-on-surface-variant">
-                            <span>
-                              {getEstimatedTimeBadge(rec.estimatedTime)}
-                            </span>
-                            <span>
-                              {rec.topicName && (
-                                <>
-                                  <span className="material-symbols-outlined text-[16px] text-outline me-1">
-                                    folder
-                                  </span>
-                                  <span>{rec.topicName}</span>
-                                </>
-                              )}
-                            </span>
-                          </div>
-                          <Link
-                            href={rec.actionLink}
-                            className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-sm hover:opacity-90 transition-opacity"
-                          >
-                            {rec.actionText}
-                            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No recommendations yet"
-                  description="Start studying to get personalized suggestions."
-                  icon="psychology"
-                  action={<Link href="/library" className="text-primary hover:underline">Begin learning</Link>}
-                />
-              )}
-            </section>
+            {/* Main Content */}
+            <div className="grid gap-6">
+              {/* Primary Column */}
+              <div className="md:col-span-2">
+                <section className="mb-6">
+                  <h2 className="text-xl font-bold text-on-surface mb-4">
+                    Today's Focus
+                  </h2>
+                  <TodayFocusCard 
+                    topic={data.todayActivities.find(a => a.type === "review")?.title ?? "Review key concepts"}
+                    progress={data.todayActivities.find(a => a.type === "review")?.progress ?? 0}
+                    timeEstimate={data.todayActivities.find(a => a.type === "review")?.estimatedTime ?? 10}
+                  />
+                </section>
+                
+                <section className="mb-6">
+                  <h2 className="text-xl font-bold text-on-surface mb-4">
+                    Recommended Activities
+                  </h2>
+                  <RecommendationsList recommendations={data.recommendations} />
+                </section>
+              </div>
 
-            {/* Section 4: Today's Learning */}
-            <section className="mb-6">
-              <h2 className="text-xl font-bold text-on-surface mb-4">
-                Today&apos;s learning
-              </h2>
-              {data.todayActivities.length > 0 ? (
-                <div className="grid gap-4">
-                  {["review", "practice", "ask_tutor"].map((type) => {
-                    const activity = data.todayActivities.find(a => a.type === type);
-                    return (
-                      <div key={type} className={activity ? 
-                        "p-4 bg-surface-container-low rounded-lg border border-surface-container-high" :
-                        "p-4 text-center text-on-surface-variant"
-                      }>
-                        {activity ? (
-                          <>
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0">
-                                <span className="material-symbols-outlined text-[24px] text-primary">
-                                  {getActivityIcon(activity.type)}
-                                </span>
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="text-base font-semibold text-on-surface mb-1">
-                                  {activity.title}
-                                </h3>
-                                <p className="text-sm text-on-surface-variant mb-2">
-                                  {activity.description}
-                                </p>
-                                <div className="mb-3">
-                                <ProgressBar
-                                    value={activity.progress}
-                                    className="mt-2"
-                                  />
-                                </div>
-                                <div className="flex items-center gap-2 text-xs font-mono">
-                                  <span>
-                                    {getEstimatedTimeBadge(activity.estimatedTime)}
-                                  </span>
-                                  <span className={activity.status === "completed" ? "text-secondary" : "text-on-surface-variant"}>
-                                    {activity.status === "completed" ? "Completed" : 
-                                     activity.status === "in_progress" ? "In progress" : "Not started"}
-                                  </span>
-                                </div>
-                                {activity.status !== "completed" && (
-                                  <Link
-                                    href="#"
-                                    className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-sm hover:opacity-90 transition-opacity"
-                                  >
-                                    Start {activity.type.toLowerCase()} →
-                                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                                  </Link>
-                                )}
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-sm">No {type.toLowerCase()} planned for today</p>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No today&apos;s learning planned"
-                  description="Set up your daily learning goals to get started."
-                  icon="today"
-                  action={<Link href="/study" className="text-primary hover:underline">Set goals</Link>}
-                />
-              )}
-            </section>
-
-            {/* Section 5: Subject Progress */}
-            <section className="mb-6">
-              <h2 className="text-xl font-bold text-on-surface mb-4">
-                Subject progress
-              </h2>
-              {data.topics.length > 0 ? (
-                <div className="space-y-3">
-                  {data.topics.map((topic, index) => {
-                    return (
-                      <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0">
-                            <span className="material-symbols-outioned text-[24px] text-primary">
-                              {getIconForSubject(topic.subject_name)}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-base font-semibold text-on-surface mb-1">
-                              {topic.name}
-                            </h3>
-                            {topic.description && (
-                              <p className="text-xs text-on-surface-variant mb-1">
-                                {topic.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 text-xs font-mono">
-                              <span className="material-symbols-outlined text-[16px] text-outline">
-                                folder
-                              </span>
-                              <span>{topic.resource_count} resources</span>
-                            </div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="material-symbols-outlined text-[16px] text-outline">
-                                psychology_alt
-                              </span>
-                              <span>{topic.mastery_state.replace("_", " ")}</span>
-                            </div>
-                            <div className="w-full bg-surface-container-high rounded-full h-2.5">
-                              <div
-                                className="h-full bg-primary rounded-full"
-                                style={{ width: `${calculateTopicAccuracy(topic)}%` }}
-                              ></div>
-                            </div>
-                            <div className="text-sm font-medium text-primary mt-1">
-                              {calculateTopicAccuracy(topic)}% mastery
-                            </div>
-                            {topic.next_review_at && (
-                              <div className="text-xs text-on-surface-variant mt-2">
-                                Next review: {formatDate(topic.next_review_at)}
-                              </div>
-                            )}
-                            <Link
-                              href={`/topics`}
-                              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-sm hover:opacity-90 transition-opacity"
-                            >
-                              View topic details
-                              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-            ) : (
-                <EmptyState
-                  title="No subjects yet"
-                  description="Create your first topic to start tracking progress."
-                  icon="category"
-                  action={<Link href="/topics" className="text-primary hover:underline">Create topic</Link>}
-                />
-              )}
-            </section>
-
-            {/* Section 6: Recent Activity */}
-            <section className="mb-6">
-              <h2 className="text-xl font-bold text-on-surface mb-4">
-                Recent activity
-              </h2>
-              {data.recentActivity.length > 0 ? (
-                <div className="space-y-3">
-                  {data.recentActivity.map((activity, index) => (
-                    <div key={index} className="p-3 bg-surface-container-low rounded-lg border border-surface-container-high">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0">
-                          <span className="material-symbols-outlined text-[24px] text-primary">
-                            {activity.icon}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-base font-semibold text-on-surface mb-1">
-                            {activity.title}
-                          </h3>
-                          <p className="text-sm text-on-surface-variant mb-2">
-                            {activity.description}
-                          </p>
-                          <p className="text-xs text-on-surface-variant">
-                            {formatTimeAgo(activity.timestamp)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No recent activity"
-                  description="Your learning activity will appear here as you study."
-                  icon="history"
-                  action={<Link href="/study" className="text-primary hover:underline">Start learning</Link>}
-                />
-              )}
-            </section>
-            {/* Section 7: Review Recommendations */}
-            <section className="mb-6">
-              <h2 className="text-xl font-bold text-on-surface mb-4">
-                Review recommendations
-              </h2>
-              {data.mistakes.filter(m => m.recurring || m.incorrect_count >= 2).length > 0 ? (
-                <div className="space-y-3">
-                  {data.mistakes.filter(m => m.recurring || m.incorrect_count >= 2).map((mistake, index) => (
-                    <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0">
-                          <span className="material-symbols-outlined text-[24px] text-primary">
-                            {mistake.recurring ? "repeat" : "building"}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-base font-semibold text-on-surface mb-1">
-                            Needs review
-                          </h3>
-                          <p className="text-sm text-on-surface-variant mb-2">
-                            {mistake.description}
-                          </p>
-                          {mistake.recurring ? (
-                            <p className="text-xs text-on-surface-variant">
-                              {mistake.incorrect_count} recent mistakes
-                            </p>
-                          ) : (
-                            <p className="text-xs text-on-surface-variant">
-                              {mistake.incorrect_count} incorrect, {mistake.correct_count} correct
-                            </p>
-                          )}
-                          <Link
-                            href={`/study/new?topicId=${getTopicIdForMistake(mistake, data.topics)}`}
-                            className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-sm hover:opacity-90 transition-opacity"
-                          >
-                            Start review →
-                            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No items need review"
-                  description="Keep up the great work! Nothing needs review right now."
-                  icon="check_circle"
-                  action={<Link href="/study" className="text-primary hover:underline">Continue learning</Link>}
-                />
-              )}
-            </section>
+              {/* Secondary Column */}
+              <div className="md:col-span-1">
+                <section className="mb-6">
+                  <h2 className="text-xl font-bold text-on-surface mb-4">
+                    Quick Stats
+                  </h2>
+                  <StatsGrid stats={[
+                    { title: "Topics", value: data.topics.length },
+                    { title: "Sessions", value: data.recentSessions.length },
+                    { title: "Mistakes", value: data.mistakes.length },
+                    { title: "Accuracy", value: data.studyContext ? `${data.studyContext.accuracy}%` : "N/A" },
+                  ]} />
+                </section>
+                
+                <section>
+                  <h2 className="text-xl font-bold text-on-surface mb-4">
+                    Recent Achievements
+                  </h2>
+                  <AchievementsList achievements={[
+                    { id: "1", title: "Streak Master", description: "Maintained a 7-day learning streak", icon: "fire", date: new Date().toISOString() },
+                    { id: "2", title: "Quick Learner", description: "Completed 10 sessions this week", icon: "speed", date: new Date().toISOString() },
+                    { id: "3", title: "Perfect Score", description: "Achieved 100% on a practice session", icon: "star", date: new Date().toISOString() },
+                  ]} />
+                </section>
+              </div>
+            </div>
           </>
         )}
 

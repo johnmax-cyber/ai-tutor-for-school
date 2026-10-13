@@ -9,7 +9,7 @@ export function Input({ className, error, ...props }: InputProps) {
   return (
     <input
       className={cn(
-        "w-full rounded-lg border border-border bg-surface-container px-3.5 py-2.5 text-base text-foreground placeholder-foreground-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-(color: var(--focus-ring)) transition-colors",
+        "w-full rounded-lg border border-border bg-surface-container px-4 py-3 text-base text-foreground placeholder-foreground-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-(color: var(--focus-ring)) transition-colors duration-150 touch-target",
         error && "border-error focus:border-error",
         className,
       )}

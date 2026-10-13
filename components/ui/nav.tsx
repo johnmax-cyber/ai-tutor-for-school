@@ -6,12 +6,12 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { cn } from "./cn";
 
 const navigationItems = [
-  { name: "Dashboard", href: "/dashboard", icon: "dashboard" },
-  { name: "Library", href: "/library", icon: "library_books" },
-  { name: "Topics", href: "/topics", icon: "category" },
-  { name: "AI Tutor", href: "/tutor", icon: "smart_toy" },
-  { name: "Study Sessions", href: "/study", icon: "timer" },
-  { name: "Progress", href: "/progress", icon: "insights" },
+  { name: "Dashboard", href: "/dashboard", icon: "dashboard", iconOutline: "dashboard_outline" },
+  { name: "Library", href: "/library", icon: "library_books", iconOutline: "library_books_outline" },
+  { name: "Topics", href: "/topics", icon: "category", iconOutline: "category_outline" },
+  { name: "AI Tutor", href: "/tutor", icon: "psychology", iconOutline: "psychology_outline" },
+  { name: "Study", href: "/study", icon: "school", iconOutline: "school_outline" },
+  { name: "Progress", href: "/progress", icon: "tracking", iconOutline: "tracking_outline" },
 ];
 
 interface NavigationProps {
@@ -66,8 +66,12 @@ export function Navigation({
                         : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
                     )}
                   >
-                    <span className="material-symbols-outlined text-[18px] shrink-0">
-                      {item.icon}
+                    <span className={`material-symbols-outlined text-[20px] shrink-0 ${
+                      isActive 
+                        ? "text-primary" 
+                        : "text-on-surface-variant"
+                    }`}>
+                      {isActive ? item.icon : item.iconOutline}
                     </span>
                     <span className="hidden sm:inline">
                       {isExpanded ? item.name : null}
@@ -120,8 +124,12 @@ export function MobileNav({ open, onClose }: { open: boolean; onClose: () => voi
                     : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
                 )}
               >
-                <span className="material-symbols-outlined text-[18px] shrink-0">
-                  {item.icon}
+                <span className={`material-symbols-outlined text-[20px] shrink-0 ${
+                  isActive 
+                    ? "text-primary" 
+                    : "text-on-surface-variant"
+                }`}>
+                  {isActive ? item.icon : item.iconOutline}
                 </span>
                 <span>{item.name}</span>
               </Link>

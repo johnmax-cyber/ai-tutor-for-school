@@ -137,53 +137,53 @@
 
 /* ============================================================ *
    2. COLOR ROLES  (light overrides via .light class)
- * ============================================================ */
+/* Updated color roles */
 :root {
-  /* Primary — indigo. Use -text variant on dark fills; -on variant on light fills. */
-  --ds-primary: var(--ds-indigo-500);
-  --ds-primary-hover: var(--ds-indigo-400);
-  --ds-primary-active: var(--ds-indigo-600);
-  --ds-primary-text: var(--ds-indigo-200);
-  --ds-primary-container: var(--ds-indigo-900);
-  --ds-on-primary: var(--ds-neutral-50);
-  --ds-on-primary-container: var(--ds-indigo-50);
+  /* Primary - warmer indigo */
+  --ds-primary: #4F46E5;
+  --ds-primary-hover: #6366F1;
+  --ds-primary-active: #4338CA;
+  --ds-primary-text: #E0E7FF;
+  --ds-primary-container: #1E293B;
+  --ds-on-primary: #FFFFFF;
+  --ds-on-primary-container: #4F46E5;
 
-  /* Secondary — emerald (success). */
-  --ds-secondary: var(--ds-emerald-500);
-  --ds-on-secondary: var(--ds-neutral-50);
+  /* Secondary - warm amber for welcoming feel */
+  --ds-secondary: #F59E0B;
+  --ds-on-secondary: #FFFFFF;
 
-  /* Accent — cyan (info). */
-  --ds-accent: var(--ds-cyan-500);
+  /* Accent - maintained cyan for info */
+  --ds-accent: #06B6D4;
+  --ds-on-accent: #FFFFFF;
 
-  /* Warning — amber. */
-  --ds-warning: var(--ds-amber-500);
-  --ds-on-warning: var(--ds-neutral-950);
-  --ds-warning-container: var(--ds-amber-100);
-  --ds-on-warning-container: var(--ds-amber-900);
+  /* Success - kept emerald */
+  --ds-success: #10B981;
+  --ds-on-success: #FFFFFF;
 
-  /* Error — red. */
-  --ds-error: var(--ds-red-500);
-  --ds-on-error: var(--ds-neutral-50);
-  --ds-error-container: var(--ds-red-100);
-  --ds-on-error-container: var(--ds-red-900);
+  /* Warning - enhanced amber */
+  --ds-warning: #F59E0B;
+  --ds-on-warning: #FFFFFF;
 
-  /* Success — emerald. */
-  --ds-success: var(--ds-emerald-500);
-  --ds-on-success: var(--ds-neutral-50);
-  --ds-success-container: var(--ds-emerald-100);
-  --ds-on-success-container: var(--ds-emerald-900);
+  /* Error - kept red */
+  --ds-error: #EF4444;
+  --ds-on-error: #FFFFFF;
+
+  /* Background enhancements */
+  --background: #0F172A; /* Neutral 950 */
+  --surface: #1E293B; /* Neutral 900 */
 }
-
 /* Light theme */
 :root .light,
 :root.light {
-  --ds-primary: var(--ds-indigo-600);
-  --ds-primary-hover: var(--ds-indigo-500);
-  --ds-primary-active: var(--ds-indigo-700);
-  --ds-primary-text: var(--ds-indigo-700);
-  --ds-primary-container: var(--ds-indigo-100);
-  --ds-on-primary: var(--ds-neutral-50);
-  --ds-on-primary-container: var(--ds-indigo-900);
+  --background: #FFFFFF;
+  --surface: #F8FAFC;
+  --ds-primary: #4F46E5;
+  --ds-primary-hover: #6366F1;
+  --ds-primary-active: #4338CA;
+  --ds-primary-text: #1E293B;
+  --ds-primary-container: #E0E7FF;
+  --ds-on-primary: #FFFFFF;
+  --ds-on-primary-container: #4F46E5;
 
   --ds-warning-container: var(--ds-amber-300);
   --ds-on-warning-container: var(--ds-amber-900);
@@ -194,21 +194,17 @@
 
   --ds-error: var(--ds-red-600);
   --ds-error-container: var(--ds-red-100);
-  --ds-on-error-container: var(--ds-red-900);
 }
-
-/* ============================================================ *
-   3. SEMANTIC TOKENS
+ /* ============================================================ *
+    3. SEMANTIC TOKENS
  * ============================================================ */
 :root {
   /* Background / foreground */
-  --background: var(--ds-neutral-950);
   --foreground: var(--ds-neutral-100);
   --foreground-secondary: var(--ds-neutral-400);
   --foreground-tertiary: var(--ds-neutral-600);
 
   /* Surface hierarchy */
-  --surface: var(--ds-neutral-900);
   --surface-container-lowest: var(--ds-neutral-950);
   --surface-container-low: var(--ds-neutral-900);
   --surface-container: var(--ds-neutral-800);
@@ -287,12 +283,12 @@
 
 :root .light,
 :root.light {
-  --background: var(--ds-neutral-50);
+  --background: #FFFFFF;
   --foreground: var(--ds-neutral-950);
   --foreground-secondary: var(--ds-neutral-500);
   --foreground-tertiary: var(--ds-neutral-600);
 
-  --surface: var(--ds-neutral-50);
+  --surface: #F8FAFC;
   --surface-container-lowest: var(--ds-neutral-50);
   --surface-container-low: var(--ds-neutral-100);
   --surface-container: var(--ds-neutral-200);
@@ -315,7 +311,6 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 }
-
 /* ============================================================ *
    4. STITCH ALIASES  (backward compatibility with existing classes)
  * ============================================================ */

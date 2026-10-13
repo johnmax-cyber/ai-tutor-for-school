@@ -12,21 +12,21 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const baseClasses =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 touch-target";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-on-primary hover:opacity-90 focus-visible:ring-(color: var(--focus-ring))",
+    "bg-primary text-on-primary hover:bg-primary/90 focus-visible:ring-(color: var(--focus-ring)) active:bg-primary/80",
   secondary:
-    "bg-secondary text-on-secondary hover:opacity-90 focus-visible:ring-(color: var(--focus-ring))",
+    "bg-secondary text-on-secondary hover:bg-secondary/90 focus-visible:ring-(color: var(--focus-ring)) active:bg-secondary/80",
   success:
-    "bg-success text-on-success hover:opacity-90 focus-visible:ring-(color: var(--focus-ring))",
+    "bg-success text-on-success hover:bg-success/90 focus-visible:ring-(color: var(--focus-ring)) active:bg-success/80",
   destructive:
-    "bg-error text-on-error hover:opacity-90 focus-visible:ring-(color: var(--focus-ring))",
+    "bg-error text-on-error hover:bg-error/90 focus-visible:ring-(color: var(--focus-ring)) active:bg-error/80",
   outline:
-    "border border-border bg-transparent text-foreground hover:bg-surface-container focus-visible:ring-(color: var(--focus-ring))",
+    "border border-border bg-transparent text-foreground hover:bg-surface-container hover:text-on-surface focus-visible:ring-(color: var(--focus-ring)) active:bg-surface-container-hover",
   ghost:
-    "bg-transparent text-foreground-secondary hover:bg-surface-container hover:text-foreground focus-visible:ring-(color: var(--focus-ring))",
+    "bg-transparent text-foreground-secondary hover:bg-surface-container hover:text-foreground focus-visible:ring-(color: var(--focus-ring)) active:bg-surface-container-hover",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -55,7 +55,7 @@ export function Button({
 
   return (
     <button
-      className={cn(buttonClasses(variant, size), className)}
+      className={cn(buttonClasses(variant, size), className, isLoading && "btn-loading")}
       disabled={isDisabled}
       aria-busy={isLoading || undefined}
       {...props}
