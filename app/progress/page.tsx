@@ -5,7 +5,6 @@ import Link from "next/link";
 import { StudyShell } from "@/components/study-shell";
 import { Button, EmptyState } from "@/components/ui";
 
-
 interface Topic {
   id: string;
   name: string;
@@ -60,16 +59,14 @@ interface StudySession {
   hints_used: number;
 }
 
-interface ProgressData {
-  topics: Topic[];
-  topicInsightsMap: Record<string, TopicInsights>;
-  sessions: StudySession[];
-  loading: boolean;
-  error: string | null;
-}
-
 export default function ProgressPage() {
-  const [data, setData] = useState<ProgressData>({
+  const [data, setData] = useState<{
+    topics: Topic[];
+    topicInsightsMap: Record<string, TopicInsights>;
+    sessions: StudySession[];
+    loading: boolean;
+    error: string | null;
+  }>({
     topics: [],
     topicInsightsMap: {},
     sessions: [],
@@ -82,7 +79,6 @@ export default function ProgressPage() {
       try {
         setData(prev => ({ ...prev, loading: true, error: null }));
 
-        // Fetch topics
         const topicsRes = await fetch(`/api/topics`);
         let topics: Topic[] = [];
         if (topicsRes.ok) {
@@ -104,7 +100,6 @@ export default function ProgressPage() {
           throw new Error("Failed to load topics");
         }
 
-        // Fetch sessions
         const sessionsRes = await fetch(`/api/study/sessions`);
         let sessions: StudySession[] = [];
         if (sessionsRes.ok) {
@@ -125,13 +120,11 @@ export default function ProgressPage() {
           throw new Error("Failed to load study sessions");
         }
 
-        // Fetch insights for each topic in parallel
         const topicIds = topics.map(t => t.id);
         const insightsPromises = topicIds.map(async (topicId) => {
           try {
             const res = await fetch(`/api/study/analytics?topicId=${topicId}`);
             if (!res.ok) {
-              // If we fail to get insights for a topic, we'll still use the topic data but without insights
               return { topicId, insights: null };
             }
             const data = await res.json();
@@ -212,7 +205,6 @@ export default function ProgressPage() {
     );
   }
 
-  // Helper functions
   const getMasteryPercentage = (topic: Topic): number => {
     if (topic.total_attempts === 0) return 0;
     return Math.round((topic.correct_attempts / topic.total_attempts) * 100);
@@ -233,17 +225,6 @@ export default function ProgressPage() {
     }
   };
 
-  const _getTopicColor = (topic: Topic): string => {
-    // Simple hash function to generate a consistent color for each topic
-    let hash = 0;
-    for (let i = 0; i < topic.name.length; i++) {
-      hash = topic.name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const c = hash & 0x00FFFFFF;
-    return `#${c.toString(16).padStart(6, "0")}`;
-  };
-
-  // Overall learning snapshot
   const totalTopics = data.topics.length;
   const totalResources = data.topics.reduce((sum, topic) => sum + topic.resource_count, 0);
   const totalSessions = data.sessions.length;
@@ -252,7 +233,6 @@ export default function ProgressPage() {
     ? Math.round(topicsWithAttempts.reduce((sum, t) => sum + getMasteryPercentage(t), 0) / topicsWithAttempts.length)
     : 0;
 
-  // Subject mastery: group by subject_name
   const subjectMap: Record<string, { topics: Topic[]; totalAttempts: number; correctAttempts: number }> = {};
   data.topics.forEach(topic => {
     const subject = topic.subject_name || "No Subject";
@@ -270,14 +250,12 @@ export default function ProgressPage() {
     topicCount: data.topics.length,
   }));
 
-  // Needs review: topics with mastery_state "review_needed" OR with common mistakes
   const needsReviewTopics = data.topics.filter(topic => {
     const insights = data.topicInsightsMap[topic.id];
     const hasMistakes = insights && insights.commonMistakes.some(m => m.occurrenceCount > 0);
     return topic.mastery_state === "review_needed" || hasMistakes;
   });
 
-  // Weak topics: topics with mastery below threshold and significant mistake patterns
   const weakTopics = data.topics.filter(topic => {
     const masteryPct = getMasteryPercentage(topic);
     const insights = data.topicInsightsMap[topic.id];
@@ -285,22 +263,18 @@ export default function ProgressPage() {
     return masteryPct < 70 && (hasSignificantMistakes || topic.mastery_state === "developing");
   });
 
-  // Recent improvement: we don't have historical data, so we'll skip for now
-  // Instead, we'll show topics that are "strong" or "developing" but have room for improvement
   const improvableTopics = data.topics.filter(topic => 
     topic.total_attempts > 0 && 
     getMasteryPercentage(topic) < 90 && 
     topic.mastery_state !== "not_started"
   );
 
-  // Study activity: recent sessions (last 5)
   const recentSessions = data.sessions.slice(0, 5).map(session => ({
     ...session,
     formattedDate: new Date(session.started_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
     accuracy: session.total_attempts > 0 ? Math.round((session.correct_attempts / session.total_attempts) * 100) : 0,
   }));
 
-  // Recommended next steps
   let recommendedAction: { title: string; description: string; actionText: string; actionLink: string } | null = null;
 
   if (needsReviewTopics.length > 0) {
@@ -320,7 +294,6 @@ export default function ProgressPage() {
       actionLink: `/study/new?topicId=${topic.id}`,
     };
   } else if (data.topics.some(topic => topic.resource_count > 0)) {
-    // There are resources but no recent activity or low mastery? Suggest starting a session
     recommendedAction = {
       title: "Start a study session",
       description: "You have resources ready to study. Begin a session to build mastery.",
@@ -335,7 +308,6 @@ export default function ProgressPage() {
       actionLink: `/topics`,
     };
   } else {
-    // Default: suggest uploading a resource if none exist
     if (totalResources === 0) {
       recommendedAction = {
         title: "Add your first resource",
@@ -344,7 +316,6 @@ export default function ProgressPage() {
         actionLink: `/library`,
       };
     } else {
-      // If we have resources and topics but no specific recommendation, suggest reviewing the first topic
       const topic = data.topics[0];
       recommendedAction = {
         title: `Review ${topic.name}`,
@@ -357,8 +328,7 @@ export default function ProgressPage() {
 
   return (
     <StudyShell>
-      <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        {/* Overall learning snapshot */}
+      <div className="space-y-8">
         <section className="mb-8">
           <h2 className="text-xl font-bold text-on-surface mb-4">
             Learning Overview
@@ -389,7 +359,6 @@ export default function ProgressPage() {
           </div>
         </section>
 
-        {/* Subject mastery */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-on-surface mb-4">
             Subject Mastery
@@ -432,7 +401,6 @@ export default function ProgressPage() {
           )}
         </section>
 
-        {/* Concept mastery */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-on-surface mb-4">
             Concept Mastery
@@ -456,8 +424,8 @@ export default function ProgressPage() {
                           {topic.description}
                         </p>
                       )}
-                      <div className="flex items-center gap-2 text-xs font-mono">
-                        <span className="material-symbols-outlined text-[16px] text-outline">
+                      <div className="flex items-center gap-2 text-xs text-outline font-mono">
+                        <span className="material-symbols-outlined text-[16px]">
                           folder
                         </span>
                         <span>{topic.resource_count} resources</span>
@@ -486,7 +454,7 @@ export default function ProgressPage() {
                       )}
                       <Link
                         href={`/study/new?topicId=${topic.id}`}
-                        className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-sm hover:opacity-90 transition-opacity"
+                        className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary text-xs font-medium hover:opacity-90 transition-opacity"
                       >
                         Start session
                         <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -506,7 +474,6 @@ export default function ProgressPage() {
           )}
         </section>
 
-        {/* Weak Topics */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-on-surface mb-4">
             Weak Topics
@@ -544,8 +511,7 @@ export default function ProgressPage() {
                       <div
                         className="h-full bg-warning rounded-full"
                         style={{ width: `${masteryPct}%` }}
-                      >
-                      </div>
+                      ></div>
                     </div>
                     <div className="text-sm font-medium text-warning">
                       {masteryPct}% mastery • Needs attention
@@ -564,9 +530,8 @@ export default function ProgressPage() {
           )}
         </section>
 
-        {/* Study activity */}
-<section className="mb-8">
-           <h2 className="text-xl font-bold text-on-surface mb-4">
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-on-surface mb-4">
             Recent Study Activity
           </h2>
           {recentSessions.length > 0 ? (
@@ -604,7 +569,6 @@ export default function ProgressPage() {
           )}
         </section>
 
-        {/* Recommended next steps */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-on-surface mb-4">
             Recommended Next Step
@@ -648,7 +612,6 @@ export default function ProgressPage() {
   );
 }
 
-// Helper function to get icon for subject
 function getIconForSubject(subject: string | null): string {
   if (!subject) return "school";
   const subjectLower = subject.toLowerCase();

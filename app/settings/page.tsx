@@ -1,9 +1,9 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { requireUser } from "@/lib/auth/require-user";
+import { Button, Field, Input, Alert } from "@/components/ui";
 
 interface Preferences {
   user_id: string;
@@ -59,18 +59,17 @@ export default function SettingsPage() {
   const [message, setMessage] = useState<"success" | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  useEffect(() => {
+useEffect(() => {
     async function checkAuth() {
-      const supabase = createClient();
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { user } = await requireUser();
         if (!user) {
           router.replace("/login");
           return;
         }
         setAuthenticated(true);
         setLoading(false);
-      } catch {
+      } catch (e) {
         router.replace("/login");
       }
     }
@@ -81,6 +80,11 @@ export default function SettingsPage() {
     async function loadPrefs() {
       if (!authenticated) return;
       try {
+        const { user } = await requireUser();
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
         const res = await fetch("/api/preferences", { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to load preferences");
         const data = await res.json();
@@ -263,7 +267,7 @@ export default function SettingsPage() {
                           className={
                             "inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition-transform duration-200 " +
                             (enabled ? "translate-x-5" : "translate-x-0.5")
-                          }
+                        }
                         />
                       </span>
                     </label>

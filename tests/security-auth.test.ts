@@ -44,10 +44,10 @@ const regularRoutes = allRoutes.filter(
   (f) => !relPath(f).includes("webhooks/n8n/") && relPath(f) !== "api/embedding-status/route.ts",
 );
 
-check("total API routes == 25", allRoutes.length === 25);
+check("total API routes == 26", allRoutes.length === 26);
 check("webhook routes == 5", webhookRoutes.length === 5);
 check("public routes == 1", publicRoute.length === 1);
-check("regular routes == 19", regularRoutes.length === 19);
+check("regular routes == 20", regularRoutes.length === 20);
 
 // ---------------------------------------------------------------------------
 // Webhook routes: must call validateN8nWebhook

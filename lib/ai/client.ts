@@ -1,4 +1,7 @@
 import OpenAI from "openai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { generateText } from "ai";
 import { AIError, AIResult, AIService, ChatMessage, EmbeddingResult, VisionResult } from "./types";
 
 export function mapProviderError(err: unknown): AIError {
@@ -51,22 +54,17 @@ export function createAIService(): AIService {
       const baseURL = process.env.AI_BASE_URL;
       const model = process.env.AI_MODEL;
 
-      if (!apiKey) {
-        throw new AIError("config", "AI_API_KEY not configured");
-      }
-      if (!model) {
-        throw new AIError("config", "AI_MODEL not configured");
+      if (!apiKey || !model) {
+        throw new AIError("config", "AI_API_KEY or AI_MODEL not configured");
       }
 
+      const start = Date.now();
       const client = new OpenAI({
         apiKey,
         baseURL,
-        maxRetries: 1,
+        maxRetries: 0,
         timeout: 45000,
       });
-
-      const start = Date.now();
-      let result: AIResult;
 
       try {
         const completion = await client.chat.completions.create({
@@ -78,19 +76,81 @@ export function createAIService(): AIService {
         const promptTokens = completion.usage?.prompt_tokens ?? 0;
         const completionTokens = completion.usage?.completion_tokens ?? 0;
 
-        console.log(`AI call: model=${model} promptTokens=${promptTokens} completionTokens=${completionTokens} latency=${latency}ms`);
+        console.log(`AI call (primary): model=${model} promptTokens=${promptTokens} completionTokens=${completionTokens} latency=${latency}ms`);
 
-        result = {
+        return {
           text: completion.choices[0]?.message?.content ?? "",
           model: completion.model,
           promptTokens,
           completionTokens,
         };
       } catch (err) {
+        console.warn("Primary AI provider failed, trying fallback:", err instanceof Error ? err.message : err);
+
+        const groqKey = process.env.GROQ_API_KEY;
+        const groqModel = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+        if (groqKey) {
+          try {
+            const groq = createOpenAI({
+              baseURL: "https://api.groq.com/openai/v1",
+              apiKey: groqKey,
+            });
+             
+            const result = await generateText({
+              model: groq(groqModel),
+              /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              messages: messages as any,
+              maxRetries: 1,
+              timeout: 45000,
+            });
+            console.log(`AI call (fallback-Groq): model=${groqModel}`);
+            return {
+              text: result.text,
+              model: ((result as any).model as string) || groqModel,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              promptTokens: Number(((result.usage as any) as Record<string, unknown>)?.inputTokens ?? ((result.usage as any) as Record<string, unknown>)?.outputTokens ?? 0),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              completionTokens: Number(((result.usage as any) as Record<string, unknown>)?.outputTokens ?? ((result.usage as any) as Record<string, unknown>)?.completionTokens ?? 0),
+            };
+          } catch (fallbackErr) {
+            console.warn("Groq fallback failed:", fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
+          }
+        }
+
+        const geminiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+        const geminiModel = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+        if (geminiKey) {
+          try {
+            const google = createGoogleGenerativeAI({
+              apiKey: geminiKey,
+            });
+             
+            const result = await generateText({
+              model: google(geminiModel),
+              /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+              messages: messages as any,
+              maxRetries: 1,
+              timeout: 45000,
+            });
+            console.log(`AI call (fallback-Gemini): model=${geminiModel}`);
+            return {
+              text: result.text,
+              model: ((result as any).model as string) || geminiModel,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              promptTokens: Number(((result.usage as any) as Record<string, unknown>)?.inputTokens ?? ((result.usage as any) as Record<string, unknown>)?.outputTokens ?? 0),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              completionTokens: Number(((result.usage as any) as Record<string, unknown>)?.outputTokens ?? ((result.usage as any) as Record<string, unknown>)?.completionTokens ?? 0),
+            };
+          } catch (fallbackErr) {
+            console.warn("Gemini fallback failed:", fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
+          }
+        }
+
         throw mapProviderError(err);
       }
-
-      return result;
     },
 
     async vision(text: string, imageBase64: string, mimeType: string): Promise<VisionResult> {

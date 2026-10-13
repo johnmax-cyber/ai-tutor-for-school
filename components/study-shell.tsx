@@ -10,26 +10,34 @@ export interface StudyShellProps {
 
 export const StudyShell: FC<StudyShellProps> = ({ breadcrumbs = [], children }) => {
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="space-y-6">
       {breadcrumbs.length > 0 && (
-        <nav className="mb-6">
-          <ul className="flex space-x-2 flex-wrap">
-            {breadcrumbs.map((crumb, index) => {
-              return (
-                <li key={crumb.href ?? index} className="flex items-center gap-1.5 text-sm">
+        <nav className="flex items-center gap-2 text-sm">
+          {breadcrumbs.map((crumb, index) => {
+            const isLast = index === breadcrumbs.length - 1;
+            return (
+              <div key={crumb.href ?? index} className="flex items-center gap-1.5">
+                {index > 0 && (
+                  <span className="material-symbols-outlined text-[14px] text-outline">
+                    chevron_right
+                  </span>
+                )}
+                {crumb.href && !isLast ? (
                   <a
-                    href={crumb.href ?? "/"}
+                    href={crumb.href}
                     className="text-primary hover:underline"
                   >
                     {crumb.label}
                   </a>
-                </li>
-              );
-            })}
-          </ul>
+                ) : (
+                  <span className="text-on-surface">{crumb.label}</span>
+                )}
+              </div>
+            );
+          })}
         </nav>
       )}
-      <div className="prose max-w-none">{children}</div>
+      {children}
     </div>
   );
 };

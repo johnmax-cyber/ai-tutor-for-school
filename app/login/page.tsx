@@ -23,7 +23,6 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    // Trim whitespace from email and password
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
 
@@ -35,13 +34,22 @@ export default function LoginPage() {
         });
         if (signInError) throw signInError;
       } else {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: trimmedEmail,
           password: trimmedPassword,
         });
         if (signUpError) throw signUpError;
+
+        // If sign up returns no session, show check-email state instead of redirecting
+        if (!signUpError && !signUpData.session) {
+          setMode("signup"); // Stay in signup mode
+          setEmail(trimmedEmail); // Preserve email
+          setError("A confirmation email has been sent. Please check your inbox.");
+          return;
+        }
+
+        router.push("/dashboard");
       }
-      router.push("/library");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -51,8 +59,7 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface p-4 text-on-surface font-sans">
-      <div className="w-full max-w-md space-y-6 rounded-xl bg-surface-container-low border border-surface-container-high p-8 shadow-2xl">
-        {/* Brand Header */}
+      <div className="w-full max-w-md space-y-6 rounded-xl bg-surface-container-low border border-surface-container-high p-8 shadow-sm">
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary shadow-sm">
             <Icon name="psychology" size="lg" />
@@ -65,21 +72,17 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Tab Toggle */}
-        <div
-          className="inline-flex rounded-lg bg-surface-container p-1 border border-outline-variant/20 text-xs font-semibold"
-          role="tablist"
-        >
+        <div className="inline-flex rounded-lg bg-surface-container p-1 border border-outline-variant/20 text-xs font-semibold" role="tablist">
           <button
             type="button"
             role="tab"
             aria-selected={mode === "signin"}
             onClick={() => setMode("signin")}
-            className={`flex-1 py-1.5 rounded-md transition-all ${
+            className={
               mode === "signin"
-                ? "bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/30"
-                : "text-on-surface-variant hover:text-on-surface"
-            }`}
+                ? "flex-1 py-1.5 rounded-md text-on-surface bg-surface-container-high shadow-sm border border-outline-variant/30"
+                : "flex-1 py-1.5 rounded-md text-on-surface-variant hover:text-on-surface"
+            }
           >
             Sign In
           </button>
@@ -88,11 +91,11 @@ export default function LoginPage() {
             role="tab"
             aria-selected={mode === "signup"}
             onClick={() => setMode("signup")}
-            className={`flex-1 py-1.5 rounded-md transition-all ${
+            className={
               mode === "signup"
-                ? "bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/30"
-                : "text-on-surface-variant hover:text-on-surface"
-            }`}
+                ? "flex-1 py-1.5 rounded-md text-on-surface bg-surface-container-high shadow-sm border border-outline-variant/30"
+                : "flex-1 py-1.5 rounded-md text-on-surface-variant hover:text-on-surface"
+            }
           >
             Create Account
           </button>

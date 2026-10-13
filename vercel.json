@@ -1,0 +1,90 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "crons": [
+    {
+      "path": "/api/cron/daily-mission",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/study-reminder",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/weekly-summary",
+      "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron/processing-retry",
+      "schedule": "*/5 * * * *"
+    }
+  ],
+  "functions": {
+    "app/api/tutor/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/webhooks/n8n/retry-processing/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/cron/daily-mission/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/study-reminder/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/weekly-summary/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/processing-retry/route.ts": {
+      "maxDuration": 300
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ]
+}

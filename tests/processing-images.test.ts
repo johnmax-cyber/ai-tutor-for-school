@@ -154,9 +154,8 @@ function createMockSupabase(
   };
 }
 
-function makePng(width: number, height: number): Uint8Array {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- `canvas` is a Node-only optional dependency; require avoids bundling it in the browser build.
-  const { createCanvas } = require("canvas");
+async function makePng(width: number, height: number): Promise<Uint8Array> {
+  const { createCanvas } = await import("canvas");
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "red";
@@ -298,7 +297,7 @@ async function main() {
 
   // Test 1: validatePptx still works
   console.log("\n--- Test 1: validatePptx ---");
-  const pngImage = makePng(100, 100);
+  const pngImage = await makePng(100, 100);
   const pptxWithImage = buildPptx({
     slides: [{ text: "Slide with image", images: [{ data: pngImage, mimeType: "image/png" }] }],
   });
@@ -333,8 +332,7 @@ async function main() {
 
   // Test 5: MAX_VISION_IMAGES_PER_RESOURCE limit
   console.log("\n--- Test 5: MAX_VISION_IMAGES_PER_RESOURCE limit ---");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- dynamic import of internal constant for the constant-exports test
-  const { MAX_VISION_IMAGES_PER_RESOURCE } = require("../lib/documents/types");
+  const { MAX_VISION_IMAGES_PER_RESOURCE } = await import("../lib/documents/types");
   check("MAX_VISION_IMAGES_PER_RESOURCE is 10", MAX_VISION_IMAGES_PER_RESOURCE === 10);
 
   // Test 6: Vision failure on one image doesn't fail describeImage for others

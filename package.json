@@ -56,8 +56,12 @@
     "test:all": "npm run test:pdf && npm run test:ocr && npm run test:validation && npm run test:images && npm run test:text && npm run test:processing-types && npm run test:chunking && npm run test:e2e && npm run test:keywords && npm run test:text-quality && npm run test:ai-errors && npm run test:tutor-prompt && npm run test:tutor-service && npm run test:tutor-golden && npm run test:study-mastery && npm run test:study-handoff && npm run test:study-mistakes && npm run test:study-service && npm run test:study-analytics && npm run test:tutor-generate && npm run test:study-e2e && npm run test:missions && npm run test:notifications && npm run test:processing-retry && npm run test:n8n-webhook && npm run test:pptx && npm run test:real-pptx && npm run test:vision && npm run test:processing-images && npm run test:tutor-vision && npm run test:pdf-regression && npm run test:tutor-cross-user && npm run test:retry-vision && npm run test:embeddings && npm run test:embeddings-pipeline && npm run test:hybrid-search && npm run test:usage-analytics && npm run test:ui-tokens && npm run test:prompt-injection && npm run test:secret-scan && npm run test:security-auth && npm run test:security-access-control && npm run test:security-file-upload && npm run test:security-db-policies"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.94",
+    "@ai-sdk/openai": "^4.0.92",
+    "@ai-sdk/provider": "^4.0.27",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
+    "ai": "^7.0.138",
     "canvas": "^3.2.3",
     "fast-xml-parser": "^5.11.2",
     "next": "16.3.8",
@@ -85,19 +89,14 @@
     "typescript": "^5"
   },
   "description": "AI Tutor for School — a Next.js app where students upload study PDFs and ask questions grounded in their own documents.",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib",
-    "test": "tests"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://ghp_picQuMjaToYNTa2djeE7i4KstzZtp62hZEa@github.com/johnmax-cyber/ai-tutor-for-school.git"
+    "url": "git+https://github.com/johnmax-cyber/ai-tutor-for-school.git"
   },
   "keywords": [],
-  "author": "",
   "license": "ISC",
   "type": "module",
+  "author": "Kilo Code",
   "bugs": {
     "url": "https://github.com/johnmax-cyber/ai-tutor-for-school/issues"
   },

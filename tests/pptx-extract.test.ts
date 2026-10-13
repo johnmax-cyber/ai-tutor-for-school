@@ -173,9 +173,8 @@ function buildPptx(opts: {
   return new Uint8Array(zip.generate({ type: "uint8array" }));
 }
 
-function makePng(width: number, height: number): Uint8Array {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- `canvas` is a Node-only optional dependency; require avoids bundling it in the browser build.
-  const { createCanvas } = require("canvas");
+async function makePng(width: number, height: number): Promise<Uint8Array> {
+  const { createCanvas } = await import("canvas");
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "red";
@@ -212,7 +211,12 @@ async function main() {
   const userId = "test-user";
   const resourceId = "test-resource";
 
-  const pngImage = makePng(100, 100);
+  // Pre-create all test images to avoid async issues in buildPptx
+  const pngImage = await makePng(100, 100);
+  const pngImage50 = await makePng(50, 50);
+  const pngImage60 = await makePng(60, 60);
+  const tinyImage = await makePng(10, 10);
+  const duplicateImage = await makePng(80, 80);
   
   const basicPptx = buildPptx({
     slides: [
@@ -235,8 +239,8 @@ async function main() {
     slides: [
       { text: "Slide with image", images: [{ data: pngImage, mimeType: "image/png" }] },
       { text: "Slide with two images", images: [
-        { data: makePng(50, 50), mimeType: "image/png" },
-        { data: makePng(60, 60), mimeType: "image/png" },
+        { data: pngImage50, mimeType: "image/png" },
+        { data: pngImage60, mimeType: "image/png" },
       ]},
     ],
   });
@@ -261,7 +265,6 @@ async function main() {
   check("reordered slides: 3 slides extracted", resultReorder.document.pageCount === 3);
   check("slide order follows presentation.xml", resultReorder.document.pages[0].text.includes("Slide C") && resultReorder.document.pages[1].text.includes("Slide B") && resultReorder.document.pages[2].text.includes("Slide A"));
 
-  const tinyImage = makePng(10, 10);
   const pptxWithTiny = buildPptx({
     slides: [
       { text: "Slide with tiny image", images: [{ data: tinyImage, mimeType: "image/png" }] },
@@ -271,7 +274,6 @@ async function main() {
   const resultTiny = await extractPptxText(pptxWithTiny, supabase, userId, resourceId);
   check("tiny image skipped", resultTiny.images.length === 0);
 
-  const duplicateImage = makePng(80, 80);
   const pptxWithDupes = buildPptx({
     slides: [
       { text: "Slide 1", images: [{ data: duplicateImage, mimeType: "image/png" }] },

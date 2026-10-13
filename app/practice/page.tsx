@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StudyShell } from "@/components/study-shell";
 import { Button, EmptyState } from "@/components/ui";
+import { requireUser } from "@/lib/auth/require-user";
 
 interface StudySession {
   id: string;
@@ -50,6 +52,7 @@ interface PracticeData {
 }
 
 export default function PracticePage() {
+  const router = useRouter();
   const [data, setData] = useState<PracticeData>({
     user: null,
     activeSession: null,
@@ -72,21 +75,14 @@ export default function PracticePage() {
       try {
         setData(prev => ({ ...prev, loading: true, error: null }));
         
-        const supabase = (await import("@/lib/supabase/client")).createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-          const { redirect } = await import("next/navigation");
-          redirect("/login");
-          return;
-        }
+        const { user } = await requireUser();
 
         const userData = {
           email: user.email ?? undefined,
           name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? undefined,
         };
 
-        // Fetch user's active study session (we'll consider any active session as a practice session candidate)
+        // Fetch user's active study session
         const sessionsRes = await fetch(`/api/study/sessions`);
         let activeSession: StudySession | null = null;
         let recentSessions: StudySession[] = [];
@@ -138,7 +134,7 @@ export default function PracticePage() {
     }
 
     loadPracticeData();
-  }, []);
+  }, [router]);
 
   if (data.loading) {
     return (
@@ -218,8 +214,7 @@ export default function PracticePage() {
             </div>
             <div>
               <p className="text-sm text-on-surface-variant">
-                Good {getTimeOfGreeting()}, 
-                {data.user?.name?.split(" ")[0] ?? "there"}!
+                Good {data.user?.name?.split(" ")[0] ?? "there"}!
               </p>
               <p className="text-base font-semibold text-on-surface">
                 Ready to practice?
@@ -297,7 +292,7 @@ export default function PracticePage() {
             <div className="p-6 bg-surface-container-low rounded-lg border border-surface-container-high">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <span className="material-symbols-outiled text-[36px] text-primary">
+                  <span className="material-symbols-outlined text-[36px] text-primary">
                     {getIconForSubject(data.recommendations.recommended.topic?.subject_name)}
                   </span>
                 </div>
@@ -353,7 +348,7 @@ export default function PracticePage() {
                 <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
-                      <span className="material-symbols-outiled text-[24px] text-primary">
+                      <span className="material-symbols-outlined text-[24px] text-primary">
                         school
                       </span>
                     </div>
@@ -397,7 +392,7 @@ export default function PracticePage() {
                 <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
-                      <span className="material-symbols-outiled text-[24px] text-primary">
+                      <span className="material-symbols-outlined text-[24px] text-primary">
                         {getIconForSubject(concept.topic?.subject_name)}
                       </span>
                     </div>
@@ -441,7 +436,7 @@ export default function PracticePage() {
                 <div key={index} className="p-3 bg-surface-container-low rounded-lg border border-surface-container-high">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
-                      <span className="material-symbols-outiled text-[24px] text-primary">
+                      <span className="material-symbols-outlined text-[24px] text-primary">
                         {session.status === "completed" ? "timer" : "psyche"}
                       </span>
                     </div>
@@ -481,7 +476,7 @@ export default function PracticePage() {
                 <div key={index} className="p-4 bg-surface-container-low rounded-lg border border-surface-container-high">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
-                      <span className="material-symbols-outiled text-[24px] text-primary">
+                      <span className="material-symbols-outlined text-[24px] text-primary">
                         repeat
                       </span>
                     </div>

@@ -80,7 +80,7 @@ check("shouldReembedChunk returns true on dim change", shouldReembedChunk({
   embeddingSkipped: false,
 }));
 
-check("shouldReembedChunk returns false when matching", shouldReembedChunk({
+check("shouldReembedChunk returns false when matching", !shouldReembedChunk({
   contentHash: "abc",
   embeddingModel: "m1",
   embeddingDim: 768,
@@ -89,7 +89,7 @@ check("shouldReembedChunk returns false when matching", shouldReembedChunk({
   embeddingSkipped: false,
 }));
 
-check("shouldReembedChunk returns false when skipped", shouldReembedChunk({
+check("shouldReembedChunk returns false when skipped", !shouldReembedChunk({
   contentHash: "abc",
   embeddingModel: "m1",
   embeddingDim: 768,

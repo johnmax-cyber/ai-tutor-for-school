@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { StudyShell } from "@/components/study-shell";
-import { StudySession } from "@/types/study";
+import type { StudySession } from "@/types/study";
 import { TopicInsights } from "@/lib/study/types";
 import {
   selectDailyMissionTopic,
@@ -39,7 +39,6 @@ export default function StudyHub() {
         const allTopics = (topicsData.topics || []) as MissionTopic[];
         setMissionTopic(selectDailyMissionTopic(allTopics));
 
-        // Fetch insights for topics that need review
         const reviewTopics = (topicsData.topics || []).filter(
           (t: { mastery_state: string; next_review_at: string | null }) =>
             t.mastery_state === "review_needed" || !t.next_review_at
@@ -87,8 +86,7 @@ export default function StudyHub() {
 
   return (
     <StudyShell breadcrumbs={[{ label: "Study Sessions", href: "/study" }]}>
-      <div className="max-w-5xl mx-auto space-y-8">
-        {/* Today's Mission Card */}
+      <div className="space-y-8">
         {missionTopic && (
           <Link
             href={`/study/new?topicId=${missionTopic.id}`}
@@ -130,7 +128,6 @@ export default function StudyHub() {
           </Link>
         )}
 
-        {/* Header Title & Quick Action */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-container-high">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-on-surface flex items-center gap-2.5">
@@ -160,7 +157,6 @@ export default function StudyHub() {
           </div>
         )}
 
-        {/* Overall Progress Overview */}
         {topicsInsights.length > 0 && (
           <div className="p-5 rounded-xl bg-surface-container-low border border-surface-container-high space-y-4">
             <h2 className="text-base font-semibold text-on-surface flex items-center gap-2">
@@ -194,14 +190,11 @@ export default function StudyHub() {
           </div>
         )}
 
-        {/* Section 1: Active Sessions */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-on-surface flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
-              <span>Active Sessions ({activeSessions.length})</span>
-            </h2>
-          </div>
+          <h2 className="text-base font-semibold text-on-surface flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+            <span>Active Sessions ({activeSessions.length})</span>
+          </h2>
 
           {activeSessions.length === 0 ? (
             <div className="p-6 rounded-xl bg-surface-container-low border border-dashed border-surface-container-high text-center">
@@ -258,16 +251,13 @@ export default function StudyHub() {
           )}
         </div>
 
-        {/* Section 2: Completed Session Archives */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-outline">
-                inventory_2
-              </span>
-              <span>Session Archives ({pastSessions.length})</span>
-            </h2>
-          </div>
+          <h2 className="text-base font-semibold text-on-surface flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px] text-outline">
+              inventory_2
+            </span>
+            <span>Session Archives ({pastSessions.length})</span>
+          </h2>
 
           {pastSessions.length === 0 ? (
             <div className="p-6 rounded-xl bg-surface-container-low border border-dashed border-surface-container-high text-center">
@@ -280,9 +270,7 @@ export default function StudyHub() {
               {pastSessions.map((session) => {
                 const accuracy =
                   session.total_attempts > 0
-                    ? Math.round(
-                        (session.correct_attempts / session.total_attempts) * 100
-                      )
+                    ? Math.round((session.correct_attempts / session.total_attempts) * 100)
                     : 0;
 
                 return (
@@ -302,7 +290,7 @@ export default function StudyHub() {
                         )}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-outline font-mono">
+                      <div className="flex items-center gap-3 text-xs text-outline font-mono">
                         <span>
                           {new Date(session.started_at).toLocaleDateString()}
                         </span>

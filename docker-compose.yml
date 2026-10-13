@@ -29,7 +29,7 @@ services:
       - N8N_PORT=5678
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       # Endpoint the Next.js app is reachable at from inside this container.
-      - APP_URL=http://host.docker.internal:3000
+      - APP_URL=${APP_URL}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

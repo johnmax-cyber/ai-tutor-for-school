@@ -39,6 +39,7 @@ interface Topic {
 
 interface Mistake {
   id: string;
+  topic_id: string | null;
   description: string;
   incorrect_count: number;
   correct_count: number;
@@ -211,6 +212,7 @@ export default function HomePage() {
           const mistakesData = await mistakesRes.json();
           mistakes = (mistakesData.mistakes || []).map((mistake: Record<string, unknown>) => ({
             id: mistake.id as string,
+            topic_id: mistake.topic_id as string | null,
             description: mistake.description as string,
             incorrect_count: mistake.incorrect_count as number,
             correct_count: mistake.correct_count as number,
@@ -785,8 +787,7 @@ function calculateTopicAccuracy(topic: Topic): number {
 }
 
 function getTopicIdForMistake(mistake: Mistake, topics: Topic[]): string | undefined {
-  const topic = topics.find(t => t.name === mistake.description.split(" ")[0] || t.description?.includes(mistake.description.split(" ")[0]));
-  return topic?.id;
+  return mistake.topic_id ? topics.find(t => t.id === mistake.topic_id)?.id : undefined;
 }
 
 // Mock data generators (in a real app, these would come from backend APIs)
@@ -817,14 +818,15 @@ function generateRecommendations(
   const reviewMistakes = mistakes.filter(m => m.recurring || m.incorrect_count >= 2);
   if (reviewMistakes.length > 0) {
     const mistake = reviewMistakes[0];
+    const topic = topics.find(t => t.id === mistake.topic_id);
     recommendations.push({
       type: "review_mistake",
-      title: `Review ${mistake.description.split(" ")[0] || "concept"}`,
+      title: `Review ${topic?.name || "concept"}`,
       description: `You have ${mistake.incorrect_count} recent mistakes with this concept`,
       estimatedTime: 10,
       actionText: "Start review",
       actionLink: "/review", // Link to review page
-      topicName: mistake.description.split(" ")[0],
+      topicName: topic?.name,
     });
     return recommendations;
   }
@@ -905,8 +907,8 @@ function generateTodayActivities(
     title: "Review key concepts",
     description: "Go over what you learned yesterday to reinforce memory",
     estimatedTime: 10,
-    progress: Math.random() > 0.7 ? 60 : 0,
-    status: Math.random() > 0.7 ? "in_progress" : "not_started",
+    progress: 60,
+    status: "in_progress",
   });
   
   // Practice activity
@@ -915,8 +917,8 @@ function generateTodayActivities(
     title: "Practice problems",
     description: "Work through exercises to build skills",
     estimatedTime: 15,
-    progress: Math.random() > 0.6 ? 40 : 0,
-    status: Math.random() > 0.6 ? "in_progress" : "not_started",
+    progress: 40,
+    status: "in_progress",
   });
   
   // Ask tutor activity
@@ -925,8 +927,8 @@ function generateTodayActivities(
     title: "Ask tutor for help",
     description: "Get clarification on difficult concepts",
     estimatedTime: 5,
-    progress: Math.random() > 0.8 ? 100 : 0,
-    status: Math.random() > 0.8 ? "completed" : "not_started",
+    progress: 100,
+    status: "completed",
   });
   
   return activities;
@@ -987,38 +989,7 @@ async function fetchRecentActivity(userId: string): Promise<RecentActivityItem[]
       }
     }
     
-    // If we have real data, return it
-    if (recentActivity.length > 0) {
-      return recentActivity;
-    }
-    
-    // Otherwise return mock data
-    return [
-      {
-        id: "1",
-        type: "resource_uploaded",
-        title: "Uploaded Biology notes",
-        description: "Cell Biology chapter 3 PDF",
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        icon: "description",
-      },
-      {
-        id: "2",
-        type: "practice_completed",
-        title: "Completed algebra practice",
-        description: "15 quadratic equation problems • 80% accuracy",
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-        icon: "timer",
-      },
-      {
-        id: "3",
-        type: "concept_reviewed",
-        title: "Reviewed photosynthesis",
-        description: "Reviewed light-dependent reactions",
-        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-        icon: "psychology_alt",
-      },
-    ];
+    return recentActivity;
   } catch (error) {
     console.error("Failed to fetch recent activity:", error);
     // Return empty array on error - the EmptyState will handle this

@@ -20,3 +20,4 @@ export { Dialog, DialogContent, DialogFooter, DialogClose } from "./dialog";
 export { Tooltip, type TooltipProps } from "./tooltip";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Dropdown, type DropdownProps, type DropdownItem } from "./dropdown";
+export { Navigation, MobileNav } from "./nav";

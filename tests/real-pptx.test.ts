@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { extractPptxText } from "../lib/documents/pptx";
 import { validatePptx } from "../lib/resources/validation";
 import { PPTX_MIME_TYPE } from "../lib/documents/types";
@@ -28,6 +29,9 @@ function createMockSupabase() {
     },
   };
 }
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function main() {
   console.log("=== Real PPTX Fixtures Test ===");

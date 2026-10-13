@@ -12,7 +12,7 @@ const numberFormat = (n: number) => n.toLocaleString("en-US");
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <Card variant="default" padding="sm" className="text-center">
-      <div className="text-xs text-foreground-tertiary font-mono">{label}</div>
+      <div className="text-xs text-foreground-secondary font-mono">{label}</div>
       <div className="text-2xl font-bold text-on-surface mt-1">
         {numberFormat(value)}
       </div>
@@ -55,7 +55,7 @@ function DashboardContent({ userId }: { userId: string }) {
 
 function DashboardSkeleton() {
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="space-y-8">
       <div className="pb-4 border-b border-surface-container-high">
         <Skeleton variant="text" className="h-8 w-48 mb-2" />
         <Skeleton variant="text" className="h-4 w-64" />
@@ -166,8 +166,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <StudyShell breadcrumbs={[{ label: "Dashboard" }]}>
-      <div className="max-w-5xl mx-auto space-y-8">
+    <StudyShell>
+      <div className="space-y-8">
         <div className="pb-4 border-b border-surface-container-high">
           <h1 className="text-2xl sm:text-3xl font-bold text-on-surface flex items-center gap-2.5">
             <Icon name="dashboard" size="xl" />

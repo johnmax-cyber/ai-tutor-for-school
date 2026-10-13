@@ -8,14 +8,24 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI Study Agent — Academic Workspace",
+  title: "Cognita.ai — Academic AI Workspace",
   description: "A personal learning environment that teaches, practices, and tracks progress.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className={`${inter.variable} dark h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-surface text-on-surface">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+        />
+      </head>
+      <body className="min-h-full flex flex-col bg-background text-on-surface font-sans">
         {children}
       </body>
     </html>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StudyShell } from "@/components/study-shell";
 import { TutorChat } from "@/components/tutor-chat";
+import { requireUser } from "@/lib/auth/require-user";
 
 export const dynamic = "force-dynamic";
 
@@ -11,15 +12,9 @@ export default async function TutorPage({
 }: {
   searchParams: Promise<{ resourceId?: string }>;
 }) {
+  const { user } = await requireUser();
+
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
   const { resourceId } = await searchParams;
 
   const { data: resources, error } = await supabase

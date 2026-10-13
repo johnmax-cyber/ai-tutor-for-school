@@ -1,46 +1,13 @@
-import { timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Resource } from "@/lib/resources/types";
 
 /**
- * Validate an inbound n8n webhook request by comparing the
- * `x-n8n-webhook-secret` header to the configured N8N_WEBHOOK_SECRET.
- *
- * Uses `crypto.timingSafeEqual` to avoid timing attacks. Never throws: any
- * missing config/header or mismatched length is treated as invalid.
- */
-export function validateN8nWebhook(request: Request): { valid: boolean } {
-  try {
-    const expected = process.env.N8N_WEBHOOK_SECRET;
-    if (!expected) {
-      return { valid: false };
-    }
-
-    const provided = request.headers.get("x-n8n-webhook-secret");
-    if (!provided) {
-      return { valid: false };
-    }
-
-    const expectedBytes = Buffer.from(expected);
-    const providedBytes = Buffer.from(provided);
-
-    if (expectedBytes.length !== providedBytes.length) {
-      return { valid: false };
-    }
-
-    return { valid: timingSafeEqual(providedBytes, expectedBytes) };
-  } catch {
-    return { valid: false };
-  }
-}
-
-/**
  * Create a Supabase client authenticated with the service role key. This client
  * bypasses Row Level Security so background workers can act on behalf of users.
  *
- * This is the ONLY place the service role key is read (webhook routes obtain
+ * This is the ONLY place the service role key is read (cron routes obtain
  * their client here rather than reading the key themselves).
  */
 export function createServiceSupabase(): SupabaseClient {
@@ -127,17 +94,17 @@ export async function isPreferenceEnabled(
   return row[key] === true;
 }
 
-/** Shared Zod schemas / parsing helpers used across the n8n webhook routes. */
+/** Shared Zod schemas / parsing helpers used across the cron routes. */
 
 const uuid = z.string().uuid();
 
-/** Base body: every webhook identifies the acting user. */
-export const webhookBaseSchema = z.object({
+/** Base body: every cron job identifies the acting user. */
+export const cronBaseSchema = z.object({
   userId: uuid,
   resourceId: uuid.optional(),
 });
 
 /** retry-processing additionally requires an owned resource. */
-export const retryProcessingSchema = webhookBaseSchema.extend({
+export const retryProcessingSchema = cronBaseSchema.extend({
   resourceId: uuid,
 });

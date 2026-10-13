@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const ACCEPTED_TYPES = {
   "application/pdf": { ext: ".pdf", label: "PDF", maxMB: 25 },
@@ -103,65 +105,68 @@ export function UploadForm({ embeddingsEnabled = false }: { embeddingsEnabled?: 
   const acceptAttr = Object.keys(ACCEPTED_TYPES).join(",");
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/60 bg-surface-container/40 hover:bg-surface-container/70 px-4 py-8 text-center transition-colors">
-        <span className="material-symbols-outlined text-[36px] text-primary mb-2">
-          cloud_upload
-        </span>
-        <label htmlFor="file" className="block w-full cursor-pointer">
-          <input
-            id="file"
-            type="file"
-            accept={acceptAttr}
-            required
-            disabled={loading}
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="sr-only"
-          />
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-sm font-medium text-on-surface">
-              {file ? file.name : "Click to select a document"}
-            </span>
-            <span className="text-xs text-outline">
-              {hint}
-            </span>
-          </div>
-        </label>
-      </div>
+    <Card variant="default" padding="lg" className="w-full">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-outline-variant/60 bg-surface-container/40 hover:bg-surface-container/70 px-4 py-8 text-center transition-colors cursor-pointer">
+          <span className="material-symbols-outlined text-[36px] text-primary mb-2">
+            cloud_upload
+          </span>
+          <label htmlFor="file" className="block w-full cursor-pointer">
+            <input
+              id="file"
+              type="file"
+              accept={acceptAttr}
+              required
+              disabled={loading}
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="sr-only"
+            />
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm font-medium text-on-surface">
+                {file ? file.name : "Tap to select a document"}
+              </span>
+              <span className="text-xs text-outline">
+                {hint}
+              </span>
+            </div>
+          </label>
+        </div>
 
-      <div className="p-2 rounded-lg bg-tertiary/5 border border-tertiary/20 text-xs text-on-surface-variant text-center">
-        <span className="material-symbols-outlined align-middle text-[14px] me-1">
-          info
-        </span>
-        Images and slides may be sent to an external AI provider when vision is enabled for diagram understanding and image Q&A.
-      </div>
-
-      {showEmbeddingNotice && (
         <div className="p-2 rounded-lg bg-tertiary/5 border border-tertiary/20 text-xs text-on-surface-variant text-center">
           <span className="material-symbols-outlined align-middle text-[14px] me-1">
             info
           </span>
-          Embeddings are enabled. Chunk text is sent to an external provider for semantic search.
+          Images and slides may be sent to an external AI provider when vision is enabled for diagram understanding and image Q&A.
         </div>
-      )}
 
-      {error && (
-        <div className="p-3 rounded-lg bg-error-container/20 border border-error/30 text-error-crimson text-sm flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px]">error</span>
-          <span>{error}</span>
-        </div>
-      )}
+        {showEmbeddingNotice && (
+          <div className="p-2 rounded-lg bg-tertiary/5 border border-tertiary/20 text-xs text-on-surface-variant text-center">
+            <span className="material-symbols-outlined align-middle text-[14px] me-1">
+              info
+            </span>
+            Embeddings are enabled. Chunk text is sent to an external provider for semantic search.
+          </div>
+        )}
 
-      <button
-        type="submit"
-        disabled={loading || !file}
-        className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary text-on-primary py-2.5 px-4 text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-      >
-        <span className="material-symbols-outlined text-[18px]">
-          {loading ? "hourglass_empty" : "upload"}
-        </span>
-        <span>{loading ? "Processing Document..." : "Upload & Ingest Document"}</span>
-      </button>
-    </form>
+        {error && (
+          <div className="p-3 rounded-lg bg-error-container/20 border border-error/30 text-error-crimson text-sm flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">error</span>
+            <span>{error}</span>
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          disabled={loading || !file}
+          size="lg"
+          className="w-full min-h-[48px]"
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {loading ? "hourglass_empty" : "upload"}
+          </span>
+          <span>{loading ? "Processing Document..." : "Upload & Ingest Document"}</span>
+        </Button>
+      </form>
+    </Card>
   );
 }

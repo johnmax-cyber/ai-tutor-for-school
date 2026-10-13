@@ -237,7 +237,7 @@ async function main() {
     let _retrieveCalled = false;
     const retrieveMock = async () => {
       _retrieveCalled = true;
-      return sampleChunks;
+      return _injectedChunks;
     };
 
     const answer = await handleTutorQuestion(

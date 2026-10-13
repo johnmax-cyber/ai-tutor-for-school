@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { StudyShell } from "@/components/study-shell";
 import TopicCard from "@/components/topic-card";
-import { Topic } from "@/types/study";
+import { Button, Alert } from "@/components/ui";
+import type { Topic } from "@/types/study";
 
 export default function TopicsPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -77,7 +78,7 @@ export default function TopicsPage() {
 
   return (
     <StudyShell breadcrumbs={[{ label: "Subjects & Topics" }]}>
-      <div className="max-w-5xl mx-auto space-y-8">
+      <div className="space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-container-high">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-on-surface flex items-center gap-2.5">
@@ -92,34 +93,28 @@ export default function TopicsPage() {
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            <button
+            <Button
+              variant={showCreateModal ? "secondary" : "primary"}
               onClick={() => setShowCreateModal(!showCreateModal)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm"
             >
-              <span className="material-symbols-outlined text-[18px]">
-                {showCreateModal ? "close" : "add"}
-              </span>
-              <span>{showCreateModal ? "Cancel" : "New Topic"}</span>
-            </button>
-            <Link
-              href="/study"
-              className="px-3 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface border border-surface-container-high transition-colors"
-            >
-              Study Hub
+              {showCreateModal ? "Cancel" : "New Topic"}
+            </Button>
+            <Link href="/study" className="hidden sm:inline-block">
+              <Button variant="outline" size="sm">
+                Study Hub
+              </Button>
             </Link>
           </div>
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-error-container/20 border border-error-crimson/30 text-error-crimson text-sm flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">error</span>
-            <span>{error}</span>
-          </div>
+          <Alert variant="error" icon={false}>
+            {error}
+          </Alert>
         )}
 
-        {/* Create Topic Form/Card */}
         {showCreateModal && (
-          <div className="p-6 rounded-xl bg-surface-container-low border border-primary/30 shadow-md space-y-4">
+          <div className="p-6 rounded-xl bg-surface-container-low border border-primary/30 shadow-sm space-y-4">
             <h2 className="text-base font-semibold text-on-surface flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-[20px]">
                 add_box
@@ -157,24 +152,21 @@ export default function TopicsPage() {
                 </div>
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={creatingTopic || !newTopicName.trim()}
-                className="px-5 py-2 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
+                className="w-full"
               >
                 {creatingTopic ? "Creating..." : "Create Topic"}
-              </button>
+              </Button>
             </form>
           </div>
         )}
 
-        {/* Topics Grid */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-on-surface">
-              Configured Topics ({topics.length})
-            </h2>
-          </div>
+        <div>
+          <h2 className="text-base font-semibold text-on-surface mb-4">
+            Configured Topics ({topics.length})
+          </h2>
 
           {topics.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,7 +175,7 @@ export default function TopicsPage() {
               ))}
             </div>
           ) : (
-            <div className="p-8 rounded-xl bg-surface-container-low border border-dashed border-surface-container-high text-center">
+            <div className="p-8 rounded-xl bg-surface-container/30 border border-dashed border-surface-container-high text-center">
               <span className="material-symbols-outlined text-[42px] text-outline mb-2">
                 category
               </span>

@@ -3,7 +3,8 @@ import { CreateSessionResult, SubmitAttemptResult } from "./types";
 import { 
   StudySession,
   StudyQuestion,
-  AttemptResult
+  AttemptResult,
+  MistakePattern
 } from "@/types/study";
 import { createClient } from "@/lib/supabase/server";
 import { generateQuestion } from "@/lib/tutor/generate";
@@ -717,6 +718,44 @@ export class StudySessionService {
       total_attempts: session.total_attempts,
       correct_attempts: session.correct_attempts,
       hints_used: session.hints_used,
+    }));
+  }
+
+  /**
+   * List all mistakes for a user (optionally scoped to a topic)
+   */
+  async listMistakes(userId: string, topicId?: string): Promise<MistakePattern[]> {
+    const supabase = await this.getSupabase();
+
+    let query = supabase
+      .from("mistakes")
+      .select("id, topic_id, description, incorrect_count, correct_count, hint_count, last_seen, recurring, created_at, updated_at")
+      .eq("user_id", userId);
+
+    if (topicId) {
+      query = query.eq("topic_id", topicId);
+    }
+
+    query = query.order("last_seen", { ascending: false });
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return (data || []).map((m: Record<string, unknown>) => ({
+      id: m.id as string,
+      user_id: userId,
+      topic_id: m.topic_id as string | null,
+      concept_id: m.concept_id as string | null,
+      question_id: m.question_id as string | null,
+      description: m.description as string,
+      incorrect_count: m.incorrect_count as number,
+      correct_count: m.correct_count as number,
+      hint_count: m.hint_count as number,
+      last_seen: m.last_seen as string,
+      recurring: m.recurring as boolean,
+      created_at: m.created_at as string | undefined,
+      updated_at: m.updated_at as string | undefined,
     }));
   }
 

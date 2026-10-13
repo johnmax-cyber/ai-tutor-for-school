@@ -4,16 +4,18 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StudyShell } from "@/components/study-shell";
+import { Button } from "@/components/ui";
 
 interface Topic {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   subject_name: string | null;
-  mastery_state: string;
+  mastery_state: "not_started" | "learning" | "developing" | "strong" | "review_needed";
   total_attempts: number;
   correct_attempts: number;
   last_studied: string | null;
+  next_review_at: string | null;
   resource_count: number;
 }
 
@@ -117,7 +119,7 @@ export default function StudyNew() {
         { label: "New Session" },
       ]}
     >
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-8">
         <div className="flex items-center justify-between pb-4 border-b border-surface-container-high">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-on-surface flex items-center gap-2.5">
@@ -148,7 +150,6 @@ export default function StudyNew() {
           </div>
         )}
 
-        {/* Topics List Card */}
         <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container-high shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-on-surface flex items-center gap-2">
@@ -231,7 +232,6 @@ export default function StudyNew() {
           )}
         </div>
 
-        {/* Create Topic Card */}
         <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container-high shadow-sm space-y-4">
           <h2 className="text-base font-semibold text-on-surface flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[20px]">
@@ -271,17 +271,24 @@ export default function StudyNew() {
               </div>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={creatingTopic || !newTopicName.trim()}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-surface-container-high hover:bg-primary hover:text-on-primary text-on-surface text-xs font-semibold disabled:opacity-40 transition-colors border border-outline-variant/30"
+              className="w-full"
             >
-              <span className="material-symbols-outlined text-[16px]">
-                save
-              </span>
-              <span>{creatingTopic ? "Creating..." : "Save Topic"}</span>
-            </button>
+              {creatingTopic ? "Creating..." : "Save Topic"}
+            </Button>
           </form>
+        </div>
+
+        <div className="pt-4">
+          <Link
+            href="/study"
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-container-low border border-surface-container-high text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors text-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            Back to Study Hub
+          </Link>
         </div>
       </div>
     </StudyShell>
