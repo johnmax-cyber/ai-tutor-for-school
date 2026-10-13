@@ -12,7 +12,7 @@
     },
     {
       "path": "/api/cron/study-reminder",
-      "schedule": "0 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/weekly-summary",
@@ -20,7 +20,7 @@
     },
     {
       "path": "/api/cron/processing-retry",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 8 * * *"
     }
   ],
   "functions": {
