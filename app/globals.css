@@ -548,6 +548,155 @@
   ::-webkit-scrollbar-thumb:hover {
     background: var(--foreground-tertiary);
   }
+  /* ============================================================ *
+     ENHANCED BUTTON STYLES (plain CSS, no @apply)
+   * ============================================================ */
+
+  .btn-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--ds-radius-lg);
+    font-weight: 500;
+    transition: all 150ms ease;
+    outline: none;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .btn-base:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .btn-base:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--on-primary);
+  }
+  .btn-primary:hover {
+    background-color: color-mix(in srgb, var(--primary) 90%, transparent);
+  }
+  .btn-primary:active {
+    background-color: color-mix(in srgb, var(--primary) 80%, transparent);
+  }
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .btn-secondary {
+    background-color: var(--secondary);
+    color: var(--on-secondary);
+  }
+  .btn-secondary:hover {
+    background-color: color-mix(in srgb, var(--secondary) 90%, transparent);
+  }
+  .btn-secondary:active {
+    background-color: color-mix(in srgb, var(--secondary) 80%, transparent);
+  }
+  .btn-secondary:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .btn-outline {
+    border: 1px solid var(--border);
+    background-color: transparent;
+    color: var(--foreground);
+  }
+  .btn-outline:hover {
+    background-color: var(--surface-container);
+    color: var(--on-surface);
+  }
+  .btn-outline:active {
+    background-color: var(--surface-container-hover);
+  }
+  .btn-outline:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--foreground-secondary);
+  }
+  .btn-ghost:hover {
+    background-color: var(--surface-container);
+    color: var(--foreground);
+  }
+  .btn-ghost:active {
+    background-color: var(--surface-container-hover);
+  }
+  .btn-ghost:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .btn-icon {
+    height: 36px;
+    width: 36px;
+    padding: 0;
+    font-size: 1rem;
+  }
+
+  .btn-loading {
+    position: relative;
+  }
+  .btn-loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--ds-radius-lg);
+    background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+  }
+
+  /* ============================================================ *
+     ENHANCED CARD STYLES
+   * ============================================================ */
+
+  .card-base {
+    border-radius: var(--ds-radius-xl);
+    border: 1px solid var(--border);
+    box-shadow: var(--ds-shadow-sm);
+  }
+
+  .card-elevated {
+    box-shadow: var(--ds-shadow-md);
+  }
+  .card-elevated:hover {
+    box-shadow: var(--ds-shadow-lg);
+  }
+  .card-elevated {
+    transition: box-shadow 200ms ease;
+  }
+
+  .card-interactive {
+    cursor: pointer;
+  }
+  .card-interactive:hover {
+    background-color: var(--surface-container-hover);
+  }
+
+  .card-highlighted {
+    border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+    background-color: color-mix(in srgb, var(--primary) 5%, transparent);
+  }
+
+  .card-container-low {
+    background-color: var(--surface-container-low);
+  }
+
+  .card-container {
+    background-color: var(--surface-container);
+  }
+
+  .card-container-high {
+    background-color: var(--surface-container-high);
+  }
 }
 
 /* Material Symbols fallback */

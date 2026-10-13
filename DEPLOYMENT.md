@@ -219,8 +219,78 @@ N8N_BLOCK_ENV_ACCESS_IN_NODE=false
 |---|---|---|
 | `daily-mission` | `0 8 * * *` (8 AM UTC daily) | Generate daily study mission per user |
 | `weekly-review` | `0 8 * * 1` (Monday 8 AM UTC) | Generate weekly summary for enabled users |
-| `processing-retry` | `*/5 * * * *` (every 5 min) | Retry failed document processing jobs |
-| `study-reminder` | `0 * * * *` (top of each hour) | Send study reminders to users with reminders enabled |
+| `processing-retry` | `0 8 * * *` (daily 8 AM UTC) | Retry failed document processing jobs |
+| `study-reminder` | `0 8 * * *` (daily 8 AM UTC) | Send study reminders to users with reminders enabled |
+
+> **Note**: The `vercel.json` file defines cron-based routes for these workflows.
+> If you are using n8n for scheduling (recommended), you can remove the `crons` section
+> from `vercel.json` or keep both as a fallback.
+
+---
+
+## n8n → Cron Migration (October 2024)
+
+### Background
+The project originally used n8n workflows for scheduled background tasks. Due to Vercel Hobby plan cron limitations (maximum 1 daily cron job), the project migrated from n8n-scheduled workflows to Vercel-native cron routes defined in `vercel.json`.
+
+### Migration Details
+
+| Original n8n Workflow | New Vercel Cron Route | Schedule Change |
+|---|---|---|
+| `daily-mission` | `/api/cron/daily-mission` | Kept: daily 8 AM UTC |
+| `weekly-review` | `/api/cron/weekly-summary` | Kept: weekly Monday 8 AM UTC |
+| `processing-retry` | `/api/cron/processing-retry` | Changed: `*/5 * * * *` (every 5 min) → `0 8 * * *` (daily 8 AM) |
+| `study-reminder` | `/api/cron/study-reminder` | Changed: `0 * * * *` (hourly) → `0 8 * * *` (daily 8 AM) |
+
+### Reason for Change
+Vercel's **Hobby plan** limits cron jobs to **1 per day**. The original 4 n8n workflows ran on schedules that exceeded this limit:
+- `processing-retry` every 5 minutes = 288 runs/day
+- `study-reminder` hourly = 24 runs/day
+- `daily-mission` = 1 run/day ✓
+- `weekly-review` = 1 run/week ✓
+
+**Total**: ~313 runs/day vs. Hobby limit of 1/day.
+
+### Migration Approach
+1. **n8n workflows deprecated**: Original n8n workflow JSON files moved to `n8n/workflows/archive/` (kept for reference)
+2. **Vercel cron routes created**: New API routes in `app/api/cron/` that implement the same logic
+3. **Schedule adjustment**: High-frequency jobs reduced to daily (Hobby plan compliant)
+4. **Fallback option**: Keep n8n workflows as backup; can be reactivated if upgrading to Vercel Pro
+
+### API Route Implementation
+Each cron route is a `POST` endpoint that:
+1. Verifies the request comes from Vercel Cron (checks `Authorization: Bearer CRON_SECRET`)
+2. Executes the task logic
+2. Returns JSON response with status and metrics
+
+Example cron route structure:
+```typescript
+// app/api/cron/daily-mission/route.ts
+export async function POST(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  // ... task logic
+  
+  return Response.json({ success: true, processed: count });
+}
+```
+
+### Cron Secret Configuration
+Add `CRON_SECRET` to Vercel environment variables (32+ random characters). This secret is passed in the `Authorization` header by Vercel when triggering cron jobs.
+
+### Rollback Plan
+If issues arise with Vercel cron jobs:
+1. Re-import archived n8n workflows from `n8n/workflows/archive/`
+2. Reactivate in n8n UI
+3. Disable `crons` section in `vercel.json`
+4. Monitor for 24 hours
+
+---
+
+## 5. n8n Production Deployment
 
 > **Note**: The `vercel.json` file also defines cron-based routes for these workflows.
 > If you are using n8n for scheduling (recommended), you can remove the `crons` section
