@@ -1,9 +1,9 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { requireUser } from "@/lib/auth/require-user";
-import { Button, Field, Input, Alert } from "@/components/ui";
 
 interface Preferences {
   user_id: string;
@@ -59,19 +59,20 @@ export default function SettingsPage() {
   const [message, setMessage] = useState<"success" | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-useEffect(() => {
+  useEffect(() => {
     async function checkAuth() {
       try {
-        const { user } = await requireUser();
-        if (!user) {
+        const supabase = createClient();
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) {
           router.replace("/login");
           return;
         }
         setAuthenticated(true);
         setLoading(false);
-      } catch (e) {
-        router.replace("/login");
-      }
+       } catch (_e) {
+         router.replace("/login");
+       }
     }
     checkAuth();
   }, [router]);
@@ -80,8 +81,9 @@ useEffect(() => {
     async function loadPrefs() {
       if (!authenticated) return;
       try {
-        const { user } = await requireUser();
-        if (!user) {
+        const supabase = createClient();
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) {
           router.replace("/login");
           return;
         }
@@ -100,8 +102,8 @@ useEffect(() => {
         setErrorMsg((err as Error).message);
       }
     }
-    loadPrefs();
-  }, [authenticated]);
+     loadPrefs();
+   }, [authenticated, router]);
 
   async function save() {
     if (!prefs) return;

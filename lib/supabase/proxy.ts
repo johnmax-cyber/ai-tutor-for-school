@@ -21,11 +21,8 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Refresh the session
-  const { data, error } = (await supabase.auth.getSession()) as {
-    data: { session: any };
-    error: Error | null;
-  };
+   // Refresh the session
+   const { data } = await supabase.auth.getSession();
 
   // Check if the current path is public
   const { pathname } = new URL(request.url);
@@ -40,19 +37,19 @@ export async function updateSession(request: NextRequest) {
 
   const response = NextResponse.next({ request });
 
-  // Set session cookies from the supabase response
-  response.cookies.set(
-    "sb:refresh-token",
-    data.session?.refresh_token ?? "",
-  );
-  response.cookies.set(
-    "sb:access-token",
-    data.session?.access_token ?? "",
-  );
-  response.cookies.set(
-    "sb:expires-at",
-    data.session?.expires_at ?? "",
-  );
+   // Set session cookies from the supabase response
+   response.cookies.set(
+     "sb:refresh-token",
+     data.session?.refresh_token ?? "",
+   );
+   response.cookies.set(
+     "sb:access-token",
+     data.session?.access_token ?? "",
+   );
+   response.cookies.set(
+     "sb:expires-at",
+     String(data.session?.expires_at ?? ""),
+   );
 
   return response;
 }

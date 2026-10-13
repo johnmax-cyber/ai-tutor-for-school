@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StudyShell } from "@/components/study-shell";
 import { Button, EmptyState } from "@/components/ui";
-import { requireUser } from "@/lib/auth/require-user";
+import { createClient } from "@/lib/supabase/client";
 
 interface StudySession {
   id: string;
@@ -75,7 +75,13 @@ export default function PracticePage() {
       try {
         setData(prev => ({ ...prev, loading: true, error: null }));
         
-        const { user } = await requireUser();
+        const supabase = createClient();
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) {
+          // User not authenticated, redirect to login
+          router.replace("/login");
+          return;
+        }
 
         const userData = {
           email: user.email ?? undefined,
@@ -514,7 +520,7 @@ export default function PracticePage() {
 }
 
 // Helper functions
-function getTimeOfGreeting(): string {
+function _getTimeOfGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "morning";
   if (hour < 17) return "afternoon";

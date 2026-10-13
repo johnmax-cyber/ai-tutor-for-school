@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StudyShell } from "@/components/study-shell";
@@ -241,13 +240,9 @@ export default async function TutorPage({
                           Mode
                         </h3>
                         {/* Mode selector - placeholder */}
-                        <select
-                          className="w-full p-2 rounded bg-surface-container-low border border-surface-container-high text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          onChange={(e) => {
-                            console.log("Mode selected:", e.target.value);
-                            // Placeholder: no actual mode change yet
-                          }}
-                        >
+                         <select
+                           className="w-full p-2 rounded bg-surface-container-low border border-surface-container-high text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/50"
+                         >
                           <option value="explain">Explain</option>
                           <option value="teach">Teach me</option>
                           <option value="practice">Practice</option>

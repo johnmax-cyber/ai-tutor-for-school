@@ -1,18 +1,9 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 
 let passed = 0;
 let failed = 0;
-
-function check(name: string, actual: boolean) {
-  if (actual) {
-    passed++;
-    console.log(`PASS: ${name}`);
-  } else {
-    failed++;
-    console.log(`FAIL: ${name}`);
-  }
-}
 
 function checkHard(name: string, actual: boolean) {
   if (actual) {
@@ -59,13 +50,13 @@ const FIXTURE_DIR = resolve(process.cwd(), "test-fixtures");
 const FIXTURE_FILE = join(FIXTURE_DIR, "secret-fixture.ts");
 
 // Ensure fixture directory exists
-if (!require("fs").existsSync(FIXTURE_DIR)) {
-  require("fs").mkdirSync(FIXTURE_DIR, { recursive: true });
+if (!existsSync(FIXTURE_DIR)) {
+  mkdirSync(FIXTURE_DIR, { recursive: true });
 }
 
 // Write a fixture that contains a fake GitHub PAT (this is what the test will check)
-if (!require("fs").existsSync(FIXTURE_FILE)) {
-  require("fs").writeFileSync(FIXTURE_FILE, `// Fixture: contains a fake GitHub PAT\nconst fake = "ghp_fake1234567890abcdefghijklmnopqrstuvwxyz";\n`);
+if (!existsSync(FIXTURE_FILE)) {
+  writeFileSync(FIXTURE_FILE, `// Fixture: contains a fake GitHub PAT\nconst fake = "ghp_fake1234567890abcdefghijklmnopqrstuvwxyz";\n`);
 }
 
 // Read all tracked files (excluding node_modules, .next, .vercel, .git)
@@ -135,13 +126,13 @@ if (!fixtureDetected) {
 // If a FAKE_TOKEN env var is set, check that it's found
 const fakeToken = process.env.FAKE_TOKEN as string | undefined;
 if (fakeToken) {
-  let fakeFound = false;
-  for (const { name, pattern } of SECRET_SCAN_PATTERNS) {
-    if (pattern.test(fakeToken)) {
-      fakeFound = true;
-      break;
-    }
-  }
+   let fakeFound = false;
+   for (const { name: _name, pattern } of SECRET_SCAN_PATTERNS) {
+     if (pattern.test(fakeToken)) {
+       fakeFound = true;
+       break;
+     }
+   }
   checkHard(
     `FAKE_TOKEN ${fakeToken.slice(0, 10)}... detected by secret scan`,
     fakeFound,

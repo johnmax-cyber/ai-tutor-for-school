@@ -96,24 +96,23 @@ export function createAIService(): AIService {
               apiKey: groqKey,
             });
              
-            const result = await generateText({
-              model: groq(groqModel),
-              /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              messages: messages as any,
-              maxRetries: 1,
-              timeout: 45000,
-            });
-            console.log(`AI call (fallback-Groq): model=${groqModel}`);
-            return {
-              text: result.text,
-              model: ((result as any).model as string) || groqModel,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              promptTokens: Number(((result.usage as any) as Record<string, unknown>)?.inputTokens ?? ((result.usage as any) as Record<string, unknown>)?.outputTokens ?? 0),
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              completionTokens: Number(((result.usage as any) as Record<string, unknown>)?.outputTokens ?? ((result.usage as any) as Record<string, unknown>)?.completionTokens ?? 0),
-            };
+             const result = await generateText({
+               model: groq(groqModel),
+               // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               messages: messages as any,
+               maxRetries: 1,
+               timeout: 45000,
+             });
+             console.log(`AI call (fallback-Groq): model=${groqModel}`);
+              return {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                model: ((result as any).model as string) || groqModel,
+                text: result.text,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                promptTokens: Number(((result.usage as any) as Record<string, unknown>)?.inputTokens ?? ((result.usage as any) as Record<string, unknown>)?.outputTokens ?? 0),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                completionTokens: Number(((result.usage as any) as Record<string, unknown>)?.outputTokens ?? ((result.usage as any) as Record<string, unknown>)?.completionTokens ?? 0),
+              };
           } catch (fallbackErr) {
             console.warn("Groq fallback failed:", fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
           }
@@ -127,23 +126,23 @@ export function createAIService(): AIService {
               apiKey: geminiKey,
             });
              
-            const result = await generateText({
-              model: google(geminiModel),
-              /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-              messages: messages as any,
-              maxRetries: 1,
-              timeout: 45000,
-            });
-            console.log(`AI call (fallback-Gemini): model=${geminiModel}`);
-            return {
-              text: result.text,
-              model: ((result as any).model as string) || geminiModel,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              promptTokens: Number(((result.usage as any) as Record<string, unknown>)?.inputTokens ?? ((result.usage as any) as Record<string, unknown>)?.outputTokens ?? 0),
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              completionTokens: Number(((result.usage as any) as Record<string, unknown>)?.outputTokens ?? ((result.usage as any) as Record<string, unknown>)?.completionTokens ?? 0),
-            };
+             const result = await generateText({
+               model: google(geminiModel),
+               // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               messages: messages as any,
+               maxRetries: 1,
+               timeout: 45000,
+             });
+             console.log(`AI call (fallback-Gemini): model=${geminiModel}`);
+              return {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                model: ((result as any).model as string) || geminiModel,
+                text: result.text,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                promptTokens: Number(((result.usage as any) as Record<string, unknown>)?.inputTokens ?? ((result.usage as any) as Record<string, unknown>)?.outputTokens ?? 0),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                completionTokens: Number(((result.usage as any) as Record<string, unknown>)?.outputTokens ?? ((result.usage as any) as Record<string, unknown>)?.completionTokens ?? 0),
+              };
           } catch (fallbackErr) {
             console.warn("Gemini fallback failed:", fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
           }

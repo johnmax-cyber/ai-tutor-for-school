@@ -1,3 +1,5 @@
+"use client";
+
 export default function Error() {
   return (
     <div className="min-h-screen bg-error/80 border-on-error/80 flex items-center justify-center">

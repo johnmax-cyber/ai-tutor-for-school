@@ -29,7 +29,7 @@ const requestSchema = z.object({
 const DAILY_REQUEST_CAP = 50;
 const MINUTE_REQUEST_CAP = 5;
 const MONTHLY_TOKEN_CAP = 100000;
-const MONTHLY_TOKEN_WARNING = 80;
+const _MONTHLY_TOKEN_WARNING = 80;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -43,12 +43,12 @@ export async function POST(request: Request) {
 
   // Rate limiting: check daily cap and per-minute rate limit
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const _monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  let todayCount = 0;
-  let monthTokenCount = 0;
-  let lastRequest = now;
+    let todayCount = 0;
+    let _monthTokenCount = 0;
+    let lastRequest = now;
 
   try {
     const { data: usageData, error: usageError } = await supabase
@@ -61,11 +61,11 @@ export async function POST(request: Request) {
       console.error("Failed to check tutor usage:", usageError);
     }
 
-    if (usageData) {
-      todayCount = usageData.request_count || 0;
-      monthTokenCount = usageData.total_tokens || 0;
-      lastRequest = usageData.last_request ? new Date(usageData.last_request) : now;
-    }
+     if (usageData) {
+       todayCount = usageData.request_count || 0;
+       _monthTokenCount = usageData.total_tokens || 0;
+       lastRequest = usageData.last_request ? new Date(usageData.last_request) : now;
+     }
   } catch (err) {
     console.error("Error reading tutor usage:", err);
   }
@@ -108,8 +108,8 @@ export async function POST(request: Request) {
     );
   }
 
-  // Monthly token spend warning at 80%
-  const monthlyTokenWarningThreshold = MONTHLY_TOKEN_CAP * 0.8;
+    // Monthly token spend warning at 80%
+    const _monthlyTokenWarningThreshold = MONTHLY_TOKEN_CAP * 0.8;
 
   let body: unknown;
   try {

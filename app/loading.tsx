@@ -1,5 +1,3 @@
-import { Metadata } from "next";
-
-export const loading: Metadata = {
-  title: "Loading..."
-};
+export default function Loading() {
+  return <div>Loading...</div>;
+}
